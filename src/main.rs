@@ -4,6 +4,7 @@ mod app;
 mod config;
 mod media;
 mod server;
+mod tray;
 
 use std::process::ExitCode;
 

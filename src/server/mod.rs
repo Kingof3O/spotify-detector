@@ -19,7 +19,11 @@ pub enum ServerError {
     Io(#[from] std::io::Error),
 }
 
-pub async fn run(config: &Config, state: AppState) -> Result<(), ServerError> {
+pub async fn run(
+    config: &Config,
+    state: AppState,
+    shutdown_rx: tokio::sync::watch::Receiver<bool>,
+) -> Result<(), ServerError> {
     let ip = config.bind_address.parse::<IpAddr>().map_err(|source| {
         ServerError::InvalidBindAddress {
             value: config.bind_address.clone(),
@@ -32,14 +36,25 @@ pub async fn run(config: &Config, state: AppState) -> Result<(), ServerError> {
 
     tracing::info!(%address, "local OBS overlay server listening");
     axum::serve(listener, router)
-        .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(shutdown_signal(shutdown_rx))
         .await?;
 
     tracing::info!("local OBS overlay server stopped");
     Ok(())
 }
 
-async fn shutdown_signal() {
+async fn shutdown_signal(mut shutdown_rx: tokio::sync::watch::Receiver<bool>) {
+    tokio::select! {
+        _ = ctrl_c_signal() => {}
+        changed = shutdown_rx.changed() => {
+            if changed.is_ok() && *shutdown_rx.borrow() {
+                tracing::info!("shutdown requested from notification-area menu");
+            }
+        }
+    }
+}
+
+async fn ctrl_c_signal() {
     if let Err(error) = tokio::signal::ctrl_c().await {
         tracing::debug!(
             ?error,

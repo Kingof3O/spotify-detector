@@ -40,7 +40,12 @@ The GSMTC media APIs are Windows APIs. On non-Windows development hosts, the ser
 5. Set the Browser Source size to **650 × 250** for the intended proportions.
 6. Leave the browser source background transparent. Do not add a browser custom CSS background.
 
-The release executable starts silently in the background on Windows; it does not keep a terminal window open. To confirm it is running, open `http://127.0.0.1:18923/health` in a browser. To stop it, end `spotify-overlay.exe` from Task Manager.
+The release executable starts silently in the background on Windows; it does not keep a terminal window open. It adds a **Spotify OBS Overlay** icon to the notification area beside the clock (Windows may place it under the **Show hidden icons** arrow). Right-click the icon to:
+
+- **Open overlay** — opens the local overlay preview in your default browser.
+- **Stop Spotify Overlay** — gracefully stops the local server and exits the application.
+
+Double-clicking the icon also opens the overlay preview. The tray component uses the native Windows message queue and does not poll, open a hidden browser, or add a heavyweight GUI framework.
 
 To start it automatically with Windows, press **Win+R**, open `shell:startup`, and place a shortcut to `spotify-overlay.exe` in that folder.
 
