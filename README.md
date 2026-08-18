@@ -18,7 +18,7 @@ There is no Spotify Web API, OAuth, cloud service, database, browser extension, 
 - Serves the overlay, health endpoint, artwork, and WebSocket from `127.0.0.1:18923`.
 - Reconnects the OBS page with bounded exponential backoff when the native process restarts.
 
-The default overlay is intentionally compact: a small square album cover, a single-line green title, a muted artist line, and a restrained progress accent on a rounded dark strip. The page outside the strip remains transparent.
+The default overlay is a clean 650 × 250 broadcast layout: a floating square album cover, a single-line green title, a muted artist line, and a restrained progress accent. The rounded card automatically derives a dark, readable background color from the current artwork while the page around it stays transparent.
 
 ## Requirements
 
@@ -37,7 +37,7 @@ The GSMTC media APIs are Windows APIs. On non-Windows development hosts, the ser
 2. Start Spotify Desktop and play a track.
 3. In OBS, add a **Browser** source.
 4. Set the URL to `http://127.0.0.1:18923/`.
-5. Use a compact source size such as **300 × 60**. The card is capped at a compact width and stays vertically tight.
+5. Set the Browser Source size to **650 × 250** for the intended proportions.
 6. Leave the browser source background transparent. Do not add a browser custom CSS background.
 
 The overlay hides itself when Spotify has no usable media metadata. When Spotify pauses, the card remains visible and the timeline freezes.

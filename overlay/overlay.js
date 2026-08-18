@@ -8,6 +8,11 @@
   const artist = document.querySelector("[data-artist]");
   const source = document.querySelector("[data-source]");
   const progress = document.querySelector("[data-progress]");
+  const paletteCanvas = document.createElement("canvas");
+  const paletteSize = 32;
+  paletteCanvas.width = paletteSize;
+  paletteCanvas.height = paletteSize;
+  const paletteContext = paletteCanvas.getContext("2d", { willReadFrequently: true });
 
   const reconnectDelays = [250, 500, 1000, 2000, 3000, 5000];
   let socket = null;
@@ -29,10 +34,12 @@
 
   artwork.addEventListener("load", function () {
     artworkShell.classList.add("has-artwork");
+    updateArtworkPalette();
   });
 
   artwork.addEventListener("error", function () {
     artworkShell.classList.remove("has-artwork");
+    resetArtworkPalette();
   });
 
   function connect() {
@@ -150,10 +157,12 @@
         artwork.setAttribute("src", artworkUrl);
       } else if (artwork.complete && artwork.naturalWidth > 0) {
         artworkShell.classList.add("has-artwork");
+        updateArtworkPalette();
       }
     } else {
       artwork.removeAttribute("src");
       artworkShell.classList.remove("has-artwork");
+      resetArtworkPalette();
     }
 
     renderProgress();
@@ -234,6 +243,91 @@
 
   function trackKey(state) {
     return [state.source, state.title, state.artist, state.album].map(displayValue).join("\u0001");
+  }
+
+  function updateArtworkPalette() {
+    const dominant = dominantArtworkColor();
+    if (!dominant) {
+      resetArtworkPalette();
+      return;
+    }
+
+    const brightestChannel = Math.max(...dominant);
+    const scale = brightestChannel > 0 ? Math.min(0.72, 108 / brightestChannel) : 0.72;
+    const neutral = [16, 17, 20];
+    const surface = dominant.map(function (channel, index) {
+      const darkened = channel * scale;
+      return Math.round(darkened * 0.9 + neutral[index] * 0.1);
+    });
+    const border = surface.map(function (channel) {
+      return Math.min(255, Math.round(channel * 1.28 + 10));
+    });
+
+    card.style.backgroundColor = rgb(surface);
+    card.style.borderColor = `rgba(${border.join(", ")}, 0.46)`;
+  }
+
+  function dominantArtworkColor() {
+    if (!paletteContext || !artwork.naturalWidth || !artwork.naturalHeight) return null;
+
+    try {
+      paletteContext.clearRect(0, 0, paletteSize, paletteSize);
+      paletteContext.drawImage(artwork, 0, 0, paletteSize, paletteSize);
+      const pixels = paletteContext.getImageData(0, 0, paletteSize, paletteSize).data;
+      const buckets = new Map();
+      const fallback = { red: 0, green: 0, blue: 0, weight: 0 };
+
+      for (let index = 0; index < pixels.length; index += 4) {
+        const alpha = pixels[index + 3];
+        if (alpha < 160) continue;
+
+        const red = pixels[index];
+        const green = pixels[index + 1];
+        const blue = pixels[index + 2];
+        const maximum = Math.max(red, green, blue);
+        const minimum = Math.min(red, green, blue);
+        const luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+
+        fallback.red += red;
+        fallback.green += green;
+        fallback.blue += blue;
+        fallback.weight += 1;
+
+        if (luminance < 18 || luminance > 242) continue;
+
+        const key = `${red >> 4}:${green >> 4}:${blue >> 4}`;
+        const saturation = maximum - minimum;
+        const weight = (1 + saturation / 160) * (luminance < 34 ? 0.35 : 1);
+        const bucket = buckets.get(key) || { red: 0, green: 0, blue: 0, weight: 0 };
+        bucket.red += red * weight;
+        bucket.green += green * weight;
+        bucket.blue += blue * weight;
+        bucket.weight += weight;
+        buckets.set(key, bucket);
+      }
+
+      let dominant = null;
+      for (const bucket of buckets.values()) {
+        if (!dominant || bucket.weight > dominant.weight) dominant = bucket;
+      }
+
+      const selected = dominant || fallback;
+      if (!selected.weight) return null;
+      return [selected.red, selected.green, selected.blue].map(function (total) {
+        return Math.round(total / selected.weight);
+      });
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function resetArtworkPalette() {
+    card.style.removeProperty("background-color");
+    card.style.removeProperty("border-color");
+  }
+
+  function rgb(channels) {
+    return `rgb(${channels.join(", ")})`;
   }
 
   function displayValue(value) {
