@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spotify Overlay</title>
+    <link rel="stylesheet" href="/overlay.css" />
+  </head>
+  <body>
+    <main class="overlay-stage" aria-live="polite">
+      <section class="now-playing is-hidden" data-overlay-card aria-label="Now playing">
+        <div class="artwork-shell" data-artwork-shell>
+          <img class="artwork" data-artwork alt="" decoding="async" />
+          <span class="artwork-fallback" aria-hidden="true">♪</span>
+        </div>
+
+        <div class="track-copy">
+          <span class="source-label" data-source aria-hidden="true"></span>
+          <h1 class="track-title" data-title></h1>
+          <p class="artist-line" data-artist></p>
+        </div>
+
+        <div class="timeline" aria-hidden="true">
+          <div class="timeline-fill" data-progress></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/overlay.js" defer></script>
+  </body>
+</html>
+
