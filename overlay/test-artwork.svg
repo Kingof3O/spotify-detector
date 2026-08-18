@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Warm brown abstract test artwork">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9b6954" />
+      <stop offset="0.52" stop-color="#6d4033" />
+      <stop offset="1" stop-color="#3d241f" />
+    </linearGradient>
+    <radialGradient id="glow" cx="24%" cy="18%" r="82%">
+      <stop offset="0" stop-color="#e8c1a2" stop-opacity="0.95" />
+      <stop offset="0.45" stop-color="#b77b61" stop-opacity="0.5" />
+      <stop offset="1" stop-color="#5a342b" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="ribbon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f1d3bb" />
+      <stop offset="1" stop-color="#a96e57" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#background)" />
+  <rect width="512" height="512" fill="url(#glow)" />
+  <path d="M-54 368C74 248 166 244 274 299c82 42 145 34 292-47v260H-54Z" fill="#2f1d1a" opacity="0.72" />
+  <path d="M-18 407c120-147 236-140 330-75 71 50 133 48 221 7" fill="none" stroke="url(#ribbon)" stroke-width="38" stroke-linecap="round" opacity="0.82" />
+  <circle cx="390" cy="96" r="72" fill="#eac5a9" opacity="0.16" />
+  <circle cx="390" cy="96" r="38" fill="#f4ddca" opacity="0.12" />
+  <text x="256" y="250" fill="#f6e7dc" font-family="Arial, sans-serif" font-size="64" font-weight="700" letter-spacing="8" text-anchor="middle">DEMO</text>
+  <text x="256" y="292" fill="#e3c4b0" font-family="Arial, sans-serif" font-size="22" letter-spacing="7" text-anchor="middle">NOW PLAYING</text>
+</svg>

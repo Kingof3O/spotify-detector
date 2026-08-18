@@ -11,12 +11,16 @@ use serde::Serialize;
 use super::{state::AppState, websocket};
 
 const INDEX_HTML: &str = include_str!("../../overlay/index.html");
+const TEST_HTML: &str = include_str!("../../overlay/test.html");
+const TEST_ARTWORK_SVG: &str = include_str!("../../overlay/test-artwork.svg");
 const OVERLAY_CSS: &str = include_str!("../../overlay/overlay.css");
 const OVERLAY_JS: &str = include_str!("../../overlay/overlay.js");
 
 pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/", get(index))
+        .route("/test", get(test))
+        .route("/test-artwork.svg", get(test_artwork))
         .route("/overlay.css", get(overlay_css))
         .route("/overlay.js", get(overlay_js))
         .route("/health", get(health))
@@ -27,6 +31,26 @@ pub fn router(state: AppState) -> Router {
 
 async fn index() -> axum::response::Html<&'static str> {
     axum::response::Html(INDEX_HTML)
+}
+
+async fn test() -> axum::response::Html<&'static str> {
+    axum::response::Html(TEST_HTML)
+}
+
+async fn test_artwork() -> impl IntoResponse {
+    (
+        [
+            (
+                header::CONTENT_TYPE,
+                HeaderValue::from_static("image/svg+xml; charset=utf-8"),
+            ),
+            (
+                header::CACHE_CONTROL,
+                HeaderValue::from_static("no-store, max-age=0"),
+            ),
+        ],
+        TEST_ARTWORK_SVG,
+    )
 }
 
 async fn overlay_css() -> impl IntoResponse {

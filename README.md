@@ -14,7 +14,7 @@ There is no Spotify Web API, OAuth, cloud service, database, browser extension, 
 - Tracks Spotify session replacement, track changes, play/pause, seek, timeline corrections, artwork changes, Spotify startup, and Spotify exit.
 - Keeps one canonical media state in Rust and sends the full state immediately to each WebSocket client.
 - Keeps only the current artwork in memory and exposes it at `/artwork` with a versioned URL.
-- Animates playback progress locally in the browser; position is not sent every animation frame.
+- Updates only when media events arrive; the browser does not run a continuous progress-rendering loop.
 - Serves the overlay, health endpoint, artwork, and WebSocket from `127.0.0.1:18923`.
 - Reconnects the OBS page with bounded exponential backoff when the native process restarts.
 
@@ -49,7 +49,7 @@ Double-clicking the icon also opens the overlay preview. The tray component uses
 
 To start it automatically with Windows, press **Win+R**, open `shell:startup`, and place a shortcut to `spotify-overlay.exe` in that folder.
 
-The overlay hides itself when Spotify has no usable media metadata. When Spotify pauses, the card remains visible and the timeline freezes.
+The overlay hides itself when Spotify has no usable media metadata. When Spotify pauses, the card remains visible.
 
 ## Development
 
@@ -60,6 +60,8 @@ cargo run
 cargo test
 cargo build --release
 ```
+
+On macOS or any development machine, start the app with `cargo run`, then open [http://127.0.0.1:18923/test](http://127.0.0.1:18923/test). The `/test` page supplies hard-coded track data and original test artwork to the production overlay code, so the layout and dominant-color behavior can be checked without Spotify or Windows media APIs. Use a 650 × 250 browser window for the intended canvas size.
 
 To build the Windows release from a Windows development machine:
 
@@ -97,6 +99,7 @@ The bind address defaults to loopback. Keep it at `127.0.0.1` unless there is a 
 
 ```text
 GET http://127.0.0.1:18923/
+GET http://127.0.0.1:18923/test
 GET http://127.0.0.1:18923/health
 GET http://127.0.0.1:18923/artwork
 WS  ws://127.0.0.1:18923/ws

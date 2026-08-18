@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spotify Overlay Test</title>
+    <link rel="stylesheet" href="/overlay.css" />
+    <script>
+      (function () {
+        "use strict";
+
+        class TestWebSocket extends EventTarget {
+          constructor(url) {
+            super();
+            this.url = url;
+            this.readyState = TestWebSocket.CONNECTING;
+
+            window.setTimeout(() => {
+              this.readyState = TestWebSocket.OPEN;
+              this.dispatchEvent(new Event("open"));
+              this.dispatchEvent(
+                new MessageEvent("message", {
+                  data: JSON.stringify({
+                    type: "state",
+                    available: true,
+                    source: "spotify-test",
+                    title: "Guilty",
+                    artist: "TAEMIN",
+                    album: "Test Album",
+                    duration_ms: 215000,
+                    position_ms: 64000,
+                    playing: true,
+                    artwork_url: "/test-artwork.svg?v=1",
+                    artwork_version: 1,
+                    timestamp: Date.now(),
+                  }),
+                }),
+              );
+            }, 40);
+          }
+
+          close() {
+            if (this.readyState === TestWebSocket.CLOSED) return;
+            this.readyState = TestWebSocket.CLOSED;
+            this.dispatchEvent(new Event("close"));
+          }
+
+          send() {}
+        }
+
+        TestWebSocket.CONNECTING = 0;
+        TestWebSocket.OPEN = 1;
+        TestWebSocket.CLOSING = 2;
+        TestWebSocket.CLOSED = 3;
+        window.WebSocket = TestWebSocket;
+      })();
+    </script>
+  </head>
+  <body>
+    <main class="overlay-stage" aria-live="polite">
+      <section class="now-playing is-hidden" data-overlay-card aria-label="Now playing">
+        <div class="artwork-shell" data-artwork-shell>
+          <img class="artwork" data-artwork alt="" decoding="async" />
+          <span class="artwork-fallback" aria-hidden="true">♪</span>
+        </div>
+
+        <div class="track-copy">
+          <span class="source-label" data-source aria-hidden="true"></span>
+          <h1 class="track-title" data-title></h1>
+          <p class="artist-line" data-artist></p>
+        </div>
+      </section>
+    </main>
+
+    <script src="/overlay.js" defer></script>
+  </body>
+</html>
