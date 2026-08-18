@@ -32,22 +32,22 @@ body {
   height: 100%;
   align-items: center;
   justify-content: flex-start;
-  padding: 6px;
+  padding: 3px;
 }
 
 .now-playing {
   position: relative;
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
-  width: min(100%, 600px);
-  min-width: 210px;
-  height: 68px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  width: min(100%, 280px);
+  min-width: 170px;
+  height: 46px;
   align-items: center;
-  gap: 10px;
-  padding: 6px 13px 7px 6px;
+  gap: 7px;
+  padding: 2px 8px 3px 3px;
   overflow: hidden;
   border: 1px solid var(--overlay-border);
-  border-radius: 9px;
+  border-radius: 7px;
   background:
     linear-gradient(105deg, rgba(29, 30, 34, 0.98), rgba(23, 24, 28, 0.95) 68%, rgba(18, 19, 22, 0.9)),
     var(--overlay-surface);
@@ -71,8 +71,8 @@ body {
 }
 
 .now-playing.is-exiting {
-  opacity: 0;
-  transform: translate3d(-13px, 0, 0);
+  opacity: 1;
+  transform: translate3d(-3px, 0, 0);
 }
 
 .now-playing.is-entering {
@@ -81,12 +81,12 @@ body {
 
 .artwork-shell {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   overflow: hidden;
-  flex: 0 0 56px;
+  flex: 0 0 40px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 5px;
+  border-radius: 4px;
   background:
     radial-gradient(circle at 25% 20%, rgba(120, 124, 136, 0.58), transparent 43%),
     linear-gradient(135deg, #282a30, #111214 72%);
@@ -117,7 +117,7 @@ body {
   display: grid;
   place-items: center;
   color: rgba(255, 255, 255, 0.86);
-  font-size: 23px;
+  font-size: 17px;
   font-weight: 700;
   opacity: 1;
   transition: opacity 160ms ease;
@@ -147,25 +147,25 @@ body {
 
 .track-title {
   color: var(--overlay-green);
-  font-size: clamp(13px, 2.1vw, 17px);
+  font-size: clamp(11px, 1.8vw, 14px);
   font-weight: 800;
   letter-spacing: -0.015em;
   line-height: 1.18;
 }
 
 .artist-line {
-  margin-top: 3px;
+  margin-top: 2px;
   color: var(--overlay-muted);
-  font-size: clamp(10px, 1.55vw, 13px);
+  font-size: clamp(9px, 1.35vw, 11px);
   font-weight: 500;
   line-height: 1.15;
 }
 
 .timeline {
   position: absolute;
-  right: 8px;
+  right: 6px;
   bottom: 0;
-  left: 8px;
+  left: 6px;
   z-index: 1;
   height: 2px;
   overflow: hidden;
@@ -185,8 +185,8 @@ body {
 
 @keyframes card-enter {
   from {
-    opacity: 0;
-    transform: translate3d(13px, 0, 0);
+    opacity: 1;
+    transform: translate3d(7px, 0, 0);
   }
 
   to {
@@ -197,20 +197,20 @@ body {
 
 @media (max-width: 280px) {
   .overlay-stage {
-    padding: 3px;
+    padding: 2px;
   }
 
   .now-playing {
-    grid-template-columns: 50px minmax(0, 1fr);
-    height: 62px;
-    gap: 8px;
-    padding-right: 9px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    height: 44px;
+    gap: 6px;
+    padding-right: 7px;
   }
 
   .artwork-shell {
-    width: 50px;
-    height: 50px;
-    flex-basis: 50px;
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
   }
 }
 

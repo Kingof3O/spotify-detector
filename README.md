@@ -37,7 +37,7 @@ The GSMTC media APIs are Windows APIs. On non-Windows development hosts, the ser
 2. Start Spotify Desktop and play a track.
 3. In OBS, add a **Browser** source.
 4. Set the URL to `http://127.0.0.1:18923/`.
-5. Use a compact source size such as **600 × 80**. The card scales to the source width and stays vertically compact.
+5. Use a compact source size such as **300 × 60**. The card is capped at a compact width and stays vertically tight.
 6. Leave the browser source background transparent. Do not add a browser custom CSS background.
 
 The overlay hides itself when Spotify has no usable media metadata. When Spotify pauses, the card remains visible and the timeline freezes.

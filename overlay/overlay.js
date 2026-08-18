@@ -161,6 +161,7 @@
 
   function hideOverlay() {
     currentState = { available: false };
+    currentTrackKey = "";
     timeline.playing = false;
     card.classList.add("is-hidden");
   }
