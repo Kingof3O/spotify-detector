@@ -45,5 +45,6 @@ async fn shutdown_signal() {
             ?error,
             "Ctrl+C handler unavailable; server will stop with the process"
         );
+        std::future::pending::<()>().await;
     }
 }
