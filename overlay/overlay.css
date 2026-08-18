@@ -1,10 +1,8 @@
 :root {
   color-scheme: dark;
-  --overlay-green: #26d96b;
-  --overlay-green-soft: #8be6ab;
-  --overlay-muted: #a5a3ad;
-  --overlay-surface: rgba(20, 21, 24, 0.94);
-  --overlay-border: rgba(255, 255, 255, 0.16);
+  --overlay-title: #f0ddd1;
+  --overlay-muted: #d8bdb9;
+  --overlay-surface: #302a2a;
 }
 
 * {
@@ -32,35 +30,30 @@ body {
   height: 100%;
   align-items: center;
   justify-content: flex-start;
-  padding: 12px;
+  padding: 33px 22px 17px 27px;
 }
 
 .now-playing {
   position: relative;
   display: grid;
-  grid-template-columns: 174px minmax(0, 1fr);
-  width: min(100%, 626px);
+  grid-template-columns: 160px minmax(0, 1fr);
+  width: min(100%, 600px);
   min-width: 320px;
-  height: 174px;
+  height: 160px;
   align-items: center;
-  gap: 30px;
-  padding: 0 32px 0 18px;
+  gap: 25px;
+  padding: 0 30px 0 17px;
   overflow: visible;
-  border: 1px solid var(--overlay-border);
-  border-radius: 27px;
+  border-radius: 28px;
   background-color: var(--overlay-surface);
-  background-image: linear-gradient(105deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.18));
-  box-shadow:
-    0 18px 38px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
   opacity: 1;
   transform: translate3d(0, 0, 0);
   transition:
     opacity 180ms ease,
     transform 220ms cubic-bezier(0.22, 0.8, 0.24, 1),
     filter 220ms ease,
-    background-color 480ms ease,
-    border-color 480ms ease;
+    background-color 420ms ease;
   will-change: opacity, transform;
 }
 
@@ -83,17 +76,16 @@ body {
 .artwork-shell {
   position: relative;
   z-index: 2;
-  width: 174px;
-  height: 174px;
+  width: 160px;
+  height: 160px;
   overflow: hidden;
-  flex: 0 0 174px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
+  flex: 0 0 160px;
+  border-radius: 18px;
   background:
     radial-gradient(circle at 25% 20%, rgba(120, 124, 136, 0.58), transparent 43%),
     linear-gradient(135deg, #282a30, #111214 72%);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
-  transform: translate3d(0, -19px, 0);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+  transform: translate3d(0, -17px, 0);
 }
 
 .artwork {
@@ -127,7 +119,7 @@ body {
 
 .track-copy {
   min-width: 0;
-  padding: 0 0 10px;
+  transform: translateY(-3px);
 }
 
 .source-label {
@@ -148,41 +140,19 @@ body {
 }
 
 .track-title {
-  color: var(--overlay-green);
-  font-size: 32px;
+  color: var(--overlay-title);
+  font-size: 36px;
   font-weight: 800;
-  letter-spacing: -0.015em;
-  line-height: 1.05;
+  letter-spacing: -0.035em;
+  line-height: 1;
 }
 
 .artist-line {
-  margin-top: 8px;
+  margin-top: 11px;
   color: var(--overlay-muted);
-  font-size: 25px;
-  font-weight: 500;
-  line-height: 1.05;
-}
-
-.timeline {
-  position: absolute;
-  right: 28px;
-  bottom: 14px;
-  left: 222px;
-  z-index: 1;
-  height: 3px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.09);
-}
-
-.timeline-fill {
-  width: 0;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, rgba(38, 217, 107, 0.82), var(--overlay-green-soft));
-  box-shadow: 0 0 7px rgba(38, 217, 107, 0.28);
-  transform-origin: left center;
-  transition: width 100ms linear;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
 }
 
 @keyframes card-enter {
@@ -226,7 +196,7 @@ body {
   }
 
   .track-copy {
-    padding: 1px 0 2px;
+    transform: none;
   }
 
   .track-title {
@@ -239,20 +209,12 @@ body {
     font-size: clamp(9px, 1.35vw, 11px);
     line-height: 1.15;
   }
-
-  .timeline {
-    right: 6px;
-    bottom: 0;
-    left: 6px;
-    height: 2px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .now-playing,
   .artwork,
-  .artwork-fallback,
-  .timeline-fill {
+  .artwork-fallback {
     transition: none;
   }
 

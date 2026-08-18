@@ -7,9 +7,8 @@
   const title = document.querySelector("[data-title]");
   const artist = document.querySelector("[data-artist]");
   const source = document.querySelector("[data-source]");
-  const progress = document.querySelector("[data-progress]");
   const paletteCanvas = document.createElement("canvas");
-  const paletteSize = 32;
+  const paletteSize = 48;
   paletteCanvas.width = paletteSize;
   paletteCanvas.height = paletteSize;
   const paletteContext = paletteCanvas.getContext("2d", { willReadFrequently: true });
@@ -19,18 +18,9 @@
   let reconnectAttempt = 0;
   let reconnectTimer = 0;
   let staleTimer = 0;
-  let animationFrame = 0;
   let currentTrackKey = "";
-  let currentState = { available: false };
   let pendingState = null;
   let transitionTimer = 0;
-  let timeline = {
-    durationMs: 0,
-    positionMs: 0,
-    playing: false,
-    syncedAt: performance.now(),
-    correction: null,
-  };
 
   artwork.addEventListener("load", function () {
     artworkShell.classList.add("has-artwork");
@@ -103,14 +93,11 @@
       pendingState = null;
       clearTimeout(transitionTimer);
       hideOverlay();
-      syncTimeline(next, true);
       return;
     }
 
     const nextKey = trackKey(next);
     const trackChanged = Boolean(currentTrackKey) && nextKey !== currentTrackKey;
-
-    syncTimeline(next, trackChanged);
 
     if (trackChanged) {
       pendingState = next;
@@ -133,7 +120,6 @@
   }
 
   function applyContent(next) {
-    currentState = next;
     currentTrackKey = trackKey(next);
 
     const nextTitle = displayValue(next.title);
@@ -164,81 +150,11 @@
       artworkShell.classList.remove("has-artwork");
       resetArtworkPalette();
     }
-
-    renderProgress();
   }
 
   function hideOverlay() {
-    currentState = { available: false };
     currentTrackKey = "";
-    timeline.playing = false;
     card.classList.add("is-hidden");
-  }
-
-  function syncTimeline(next, trackChanged) {
-    const now = performance.now();
-    const incomingPosition = finiteNumber(next.position_ms, 0);
-    const incomingDuration = finiteNumber(next.duration_ms, 0);
-    const currentPosition = readPosition(now);
-    const correctionIsSmall =
-      !trackChanged &&
-      timeline.playing &&
-      next.playing === true &&
-      Math.abs(incomingPosition - currentPosition) <= 750;
-
-    timeline.durationMs = incomingDuration;
-    timeline.playing = next.playing === true;
-    timeline.syncedAt = now;
-    timeline.correction = correctionIsSmall
-      ? { from: currentPosition, to: incomingPosition, startedAt: now }
-      : null;
-    timeline.positionMs = correctionIsSmall ? currentPosition : incomingPosition;
-    renderProgress();
-  }
-
-  function readPosition(now) {
-    if (timeline.correction) {
-      const correction = timeline.correction;
-      const elapsed = now - correction.startedAt;
-      const blend = Math.min(1, Math.max(0, elapsed / 180));
-      let position = correction.from + (correction.to - correction.from) * blend;
-      if (timeline.playing) position += elapsed;
-
-      if (blend >= 1) {
-        timeline.correction = null;
-        timeline.positionMs = correction.to + (timeline.playing ? elapsed : 0);
-        timeline.syncedAt = now;
-      }
-      return clamp(position, 0, timeline.durationMs);
-    }
-
-    const elapsed = timeline.playing ? Math.max(0, now - timeline.syncedAt) : 0;
-    return clamp(timeline.positionMs + elapsed, 0, timeline.durationMs);
-  }
-
-  function renderProgress() {
-    if (animationFrame) return;
-    if (!currentState.available) {
-      progress.style.width = "0%";
-      return;
-    }
-
-    const frame = function () {
-      animationFrame = 0;
-      if (!currentState.available) {
-        progress.style.width = "0%";
-        return;
-      }
-
-      const now = performance.now();
-      const position = readPosition(now);
-      const duration = timeline.durationMs;
-      const percentage = duration > 0 ? (position / duration) * 100 : 0;
-      progress.style.width = `${clamp(percentage, 0, 100)}%`;
-      animationFrame = window.requestAnimationFrame(frame);
-    };
-
-    animationFrame = window.requestAnimationFrame(frame);
   }
 
   function trackKey(state) {
@@ -252,19 +168,16 @@
       return;
     }
 
-    const brightestChannel = Math.max(...dominant);
-    const scale = brightestChannel > 0 ? Math.min(0.72, 108 / brightestChannel) : 0.72;
-    const neutral = [16, 17, 20];
+    const sourceLuminance = luminance(dominant);
+    const targetLuminance = Math.min(84, Math.max(46, sourceLuminance * 0.77));
+    const scale = sourceLuminance > 0 ? targetLuminance / sourceLuminance : 1;
+    const neutral = [17, 17, 20];
     const surface = dominant.map(function (channel, index) {
-      const darkened = channel * scale;
-      return Math.round(darkened * 0.9 + neutral[index] * 0.1);
-    });
-    const border = surface.map(function (channel) {
-      return Math.min(255, Math.round(channel * 1.28 + 10));
+      const mixed = channel * scale * 0.94 + neutral[index] * 0.06;
+      return Math.min(255, Math.max(0, Math.round(mixed / 4) * 4));
     });
 
     card.style.backgroundColor = rgb(surface);
-    card.style.borderColor = `rgba(${border.join(", ")}, 0.46)`;
   }
 
   function dominantArtworkColor() {
@@ -275,46 +188,99 @@
       paletteContext.drawImage(artwork, 0, 0, paletteSize, paletteSize);
       const pixels = paletteContext.getImageData(0, 0, paletteSize, paletteSize).data;
       const buckets = new Map();
-      const fallback = { red: 0, green: 0, blue: 0, weight: 0 };
+      const fallback = { red: 0, green: 0, blue: 0, count: 0 };
 
       for (let index = 0; index < pixels.length; index += 4) {
         const alpha = pixels[index + 3];
-        if (alpha < 160) continue;
+        if (alpha < 192) continue;
 
         const red = pixels[index];
         const green = pixels[index + 1];
         const blue = pixels[index + 2];
-        const maximum = Math.max(red, green, blue);
-        const minimum = Math.min(red, green, blue);
-        const luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+        const pixelLuminance = luminance([red, green, blue]);
 
         fallback.red += red;
         fallback.green += green;
         fallback.blue += blue;
-        fallback.weight += 1;
+        fallback.count += 1;
 
-        if (luminance < 18 || luminance > 242) continue;
+        if (pixelLuminance < 10 || pixelLuminance > 248) continue;
 
-        const key = `${red >> 4}:${green >> 4}:${blue >> 4}`;
-        const saturation = maximum - minimum;
-        const weight = (1 + saturation / 160) * (luminance < 34 ? 0.35 : 1);
-        const bucket = buckets.get(key) || { red: 0, green: 0, blue: 0, weight: 0 };
-        bucket.red += red * weight;
-        bucket.green += green * weight;
-        bucket.blue += blue * weight;
-        bucket.weight += weight;
+        const quantizedRed = red >> 5;
+        const quantizedGreen = green >> 5;
+        const quantizedBlue = blue >> 5;
+        const key = (quantizedRed << 6) | (quantizedGreen << 3) | quantizedBlue;
+        const bucket = buckets.get(key) || {
+          red: 0,
+          green: 0,
+          blue: 0,
+          count: 0,
+          quantizedRed,
+          quantizedGreen,
+          quantizedBlue,
+        };
+        bucket.red += red;
+        bucket.green += green;
+        bucket.blue += blue;
+        bucket.count += 1;
         buckets.set(key, bucket);
       }
 
-      let dominant = null;
-      for (const bucket of buckets.values()) {
-        if (!dominant || bucket.weight > dominant.weight) dominant = bucket;
+      let selected = null;
+      let selectedScore = -1;
+      for (const candidate of buckets.values()) {
+        let score = 0;
+        for (const neighbor of buckets.values()) {
+          const distance =
+            Math.abs(candidate.quantizedRed - neighbor.quantizedRed) +
+            Math.abs(candidate.quantizedGreen - neighbor.quantizedGreen) +
+            Math.abs(candidate.quantizedBlue - neighbor.quantizedBlue);
+          if (distance === 0) score += neighbor.count;
+          else if (distance === 1) score += neighbor.count * 0.35;
+          else if (distance === 2) score += neighbor.count * 0.12;
+        }
+
+        const candidateColor = [
+          candidate.red / candidate.count,
+          candidate.green / candidate.count,
+          candidate.blue / candidate.count,
+        ];
+        const candidateLuminance = luminance(candidateColor);
+        if (candidateLuminance < 24) score *= 0.35;
+        else if (candidateLuminance > 232) score *= 0.55;
+
+        if (
+          score > selectedScore ||
+          (score === selectedScore && selected && candidate.count > selected.count)
+        ) {
+          selected = candidate;
+          selectedScore = score;
+        }
       }
 
-      const selected = dominant || fallback;
-      if (!selected.weight) return null;
+      if (selected) {
+        const cluster = { red: 0, green: 0, blue: 0, count: 0 };
+        for (const neighbor of buckets.values()) {
+          const distance =
+            Math.abs(selected.quantizedRed - neighbor.quantizedRed) +
+            Math.abs(selected.quantizedGreen - neighbor.quantizedGreen) +
+            Math.abs(selected.quantizedBlue - neighbor.quantizedBlue);
+          const weight = distance === 0 ? 1 : distance === 1 ? 0.35 : distance === 2 ? 0.12 : 0;
+          if (!weight) continue;
+
+          cluster.red += neighbor.red * weight;
+          cluster.green += neighbor.green * weight;
+          cluster.blue += neighbor.blue * weight;
+          cluster.count += neighbor.count * weight;
+        }
+        selected = cluster;
+      } else {
+        selected = fallback;
+      }
+
+      if (!selected.count) return null;
       return [selected.red, selected.green, selected.blue].map(function (total) {
-        return Math.round(total / selected.weight);
+        return Math.round(total / selected.count);
       });
     } catch (_error) {
       return null;
@@ -323,7 +289,10 @@
 
   function resetArtworkPalette() {
     card.style.removeProperty("background-color");
-    card.style.removeProperty("border-color");
+  }
+
+  function luminance(channels) {
+    return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
   }
 
   function rgb(channels) {
@@ -332,15 +301,6 @@
 
   function displayValue(value) {
     return typeof value === "string" ? value.trim() : "";
-  }
-
-  function finiteNumber(value, fallback) {
-    return typeof value === "number" && Number.isFinite(value) ? Math.max(0, value) : fallback;
-  }
-
-  function clamp(value, minimum, maximum) {
-    if (maximum <= 0) return Math.max(0, value);
-    return Math.min(maximum, Math.max(minimum, value));
   }
 
   connect();

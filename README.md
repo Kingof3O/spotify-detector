@@ -18,7 +18,7 @@ There is no Spotify Web API, OAuth, cloud service, database, browser extension, 
 - Serves the overlay, health endpoint, artwork, and WebSocket from `127.0.0.1:18923`.
 - Reconnects the OBS page with bounded exponential backoff when the native process restarts.
 
-The default overlay is a clean 650 × 250 broadcast layout: a floating square album cover, a single-line green title, a muted artist line, and a restrained progress accent. The rounded card automatically derives a dark, readable background color from the current artwork while the page around it stays transparent.
+The default overlay is a clean 650 × 250 broadcast layout: a floating square album cover, a single-line cream title, and a muted artist line on a compact rounded card. The card automatically derives a stable, darkened dominant color from the current artwork while the page around it stays transparent.
 
 ## Requirements
 
