@@ -325,6 +325,7 @@
   function resetTitleMarquee() {
     title.classList.remove("is-overflowing", "is-measuring");
     title.style.removeProperty("--title-marquee-distance");
+    title.style.removeProperty("--title-marquee-offset");
     title.style.removeProperty("--title-marquee-duration");
     titleTrack.style.removeProperty("transform");
   }
@@ -334,7 +335,6 @@
 
     resetTitleMarquee();
 
-    const containerWidth = title.getBoundingClientRect().width;
     const overflow = titleText.scrollWidth - title.clientWidth;
     if (overflow <= 2) return;
 
@@ -345,6 +345,7 @@
     const scrollDuration = Math.min(32, Math.max(4.5, distance / 48));
     const duration = scrollDuration / 0.76;
     title.style.setProperty("--title-marquee-distance", `${distance}px`);
+    title.style.setProperty("--title-marquee-offset", `${-distance}px`);
     title.style.setProperty("--title-marquee-duration", `${duration.toFixed(2)}s`);
     title.classList.remove("is-measuring");
   }

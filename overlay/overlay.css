@@ -168,6 +168,7 @@ body {
   align-items: baseline;
   transform: translate3d(0, 0, 0);
   animation: title-marquee var(--title-marquee-duration) linear infinite;
+  animation-play-state: running;
   will-change: transform;
 }
 
@@ -213,7 +214,7 @@ body {
 
   88%,
   100% {
-    transform: translate3d(calc(-1 * var(--title-marquee-distance)), 0, 0);
+    transform: translate3d(var(--title-marquee-offset, 0px), 0, 0);
   }
 }
 
@@ -271,10 +272,4 @@ body {
   .now-playing.is-entering {
     animation: none;
   }
-
-  .track-title.is-overflowing .track-marquee {
-    animation: none;
-    transform: translate3d(0, 0, 0);
-  }
-
 }
