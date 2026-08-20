@@ -1,12 +1,13 @@
 use axum::{
     body::Body,
-    extract::State,
-    http::{header, HeaderValue, StatusCode},
+    extract::{ConnectInfo, State},
+    http::{header, HeaderMap, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 use serde::Serialize;
+use std::net::SocketAddr;
 
 use super::{state::AppState, websocket};
 
@@ -26,6 +27,7 @@ pub fn router(state: AppState) -> Router {
         .route("/health", get(health))
         .route("/artwork", get(artwork))
         .route("/ws", get(websocket::upgrade))
+        .route("/internal/shutdown", post(shutdown))
         .with_state(state)
 }
 
@@ -105,4 +107,23 @@ async fn artwork(State(state): State<AppState>) -> Response {
         HeaderValue::from_static("no-store, max-age=0"),
     );
     response
+}
+
+async fn shutdown(
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> StatusCode {
+    let restart_header_is_valid = headers
+        .get("x-spotify-overlay-restart")
+        .and_then(|value| value.to_str().ok())
+        == Some("1");
+    if !peer.ip().is_loopback() || !restart_header_is_valid {
+        return StatusCode::FORBIDDEN;
+    }
+
+    match state.shutdown.send(true) {
+        Ok(()) => StatusCode::ACCEPTED,
+        Err(_) => StatusCode::SERVICE_UNAVAILABLE,
+    }
 }

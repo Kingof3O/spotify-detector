@@ -32,7 +32,7 @@ pub async fn run(config: Config) -> Result<(), AppError> {
     let overlay_url = format!("http://{overlay_host}:{}/", config.port);
     let _tray_thread = crate::tray::spawn(overlay_url, shutdown_tx.clone());
 
-    let server_state = AppState::new(state_rx, artwork);
+    let server_state = AppState::new(state_rx, artwork, shutdown_tx);
     server::run(&config, server_state, shutdown_rx).await?;
 
     Ok(())

@@ -15,6 +15,7 @@ There is no Spotify Web API, OAuth, cloud service, database, browser extension, 
 - Keeps one canonical media state in Rust and sends the full state immediately to each WebSocket client.
 - Keeps only the current artwork in memory and exposes it at `/artwork` with a versioned URL.
 - Updates only when media events arrive; the browser does not run a continuous progress-rendering loop.
+- Smoothly pans long track titles back and forth, pausing at both ends without shrinking the text.
 - Serves the overlay, health endpoint, artwork, and WebSocket from `127.0.0.1:18923`.
 - Reconnects the OBS page with bounded exponential backoff when the native process restarts.
 
@@ -47,6 +48,11 @@ The release executable starts silently in the background on Windows; it does not
 
 Double-clicking the icon also opens the overlay preview. The tray component uses the native Windows message queue and does not poll, open a hidden browser, or add a heavyweight GUI framework.
 
+Starting the executable again asks a running copy to stop cleanly, then the new copy takes over the local port. If an older or stuck version still prevents startup, double-click **`restart-and-check.cmd`** from the extracted release folder. It closes previous `spotify-overlay.exe` processes, starts a fresh copy, checks the `/health` endpoint, and prints either a clear success message or the latest diagnostic log entries.
+
+Release builds keep a lightweight `spotify-overlay.log` beside the executable. The file is capped by rotating it at 1 MiB and is useful when the background application cannot start normally.
+Fatal startup errors also appear in a Windows message box instead of failing silently.
+
 To start it automatically with Windows, press **Win+R**, open `shell:startup`, and place a shortcut to `spotify-overlay.exe` in that folder.
 
 The overlay hides itself when Spotify has no usable media metadata. When Spotify pauses, the card remains visible.
@@ -61,7 +67,7 @@ cargo test
 cargo build --release
 ```
 
-On macOS or any development machine, start the app with `cargo run`, then open [http://127.0.0.1:18923/test](http://127.0.0.1:18923/test). The `/test` page supplies hard-coded track data and original test artwork to the production overlay code, so the layout and dominant-color behavior can be checked without Spotify or Windows media APIs. Use a 650 × 250 browser window for the intended canvas size.
+On macOS or any development machine, start the app with `cargo run`, then open [http://127.0.0.1:18923/test](http://127.0.0.1:18923/test). The `/test` page supplies hard-coded track data and original test artwork to the production overlay code, so the layout and dominant-color behavior can be checked without Spotify or Windows media APIs. Use a 650 × 250 browser window for the intended canvas size. Add `?long=1` to the URL to test the long-title animation.
 
 To build the Windows release from a Windows development machine:
 

@@ -5,6 +5,7 @@
   const artworkShell = document.querySelector("[data-artwork-shell]");
   const artwork = document.querySelector("[data-artwork]");
   const title = document.querySelector("[data-title]");
+  const titleText = document.querySelector("[data-title-text]");
   const artist = document.querySelector("[data-artist]");
   const source = document.querySelector("[data-source]");
   const paletteCanvas = document.createElement("canvas");
@@ -21,6 +22,14 @@
   let currentTrackKey = "";
   let pendingState = null;
   let transitionTimer = 0;
+  let titleMeasureFrame = 0;
+
+  if (typeof ResizeObserver === "function") {
+    const titleObserver = new ResizeObserver(queueTitleMeasurement);
+    titleObserver.observe(title);
+  } else {
+    window.addEventListener("resize", queueTitleMeasurement);
+  }
 
   artwork.addEventListener("load", function () {
     artworkShell.classList.add("has-artwork");
@@ -126,7 +135,7 @@
     const nextArtist = displayValue(next.artist);
     const nextSource = displayValue(next.source);
 
-    title.textContent = nextTitle;
+    titleText.textContent = nextTitle;
     artist.textContent = nextArtist;
     source.textContent = nextSource;
     card.setAttribute(
@@ -135,6 +144,7 @@
     );
     card.classList.toggle("is-playing", next.playing === true);
     card.classList.remove("is-hidden");
+    queueTitleMeasurement();
 
     const artworkUrl = displayValue(next.artwork_url);
     if (artworkUrl) {
@@ -289,6 +299,26 @@
 
   function resetArtworkPalette() {
     card.style.removeProperty("background-color");
+  }
+
+  function queueTitleMeasurement() {
+    window.cancelAnimationFrame(titleMeasureFrame);
+    titleMeasureFrame = window.requestAnimationFrame(updateTitleAnimation);
+  }
+
+  function updateTitleAnimation() {
+    titleMeasureFrame = 0;
+    title.classList.remove("is-overflowing");
+    title.style.removeProperty("--title-overflow");
+    title.style.removeProperty("--title-pan-duration");
+
+    const overflow = Math.ceil(titleText.scrollWidth - title.clientWidth);
+    if (overflow <= 2) return;
+
+    const duration = Math.min(14, Math.max(7, 5 + overflow / 34));
+    title.style.setProperty("--title-overflow", `${overflow}px`);
+    title.style.setProperty("--title-pan-duration", `${duration.toFixed(2)}s`);
+    title.classList.add("is-overflowing");
   }
 
   function luminance(channels) {

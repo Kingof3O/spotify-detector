@@ -147,6 +147,16 @@ body {
   line-height: 1;
 }
 
+.track-title-text {
+  display: inline-block;
+  min-width: max-content;
+  transform: translateX(0);
+}
+
+.track-title.is-overflowing .track-title-text {
+  animation: title-pan var(--title-pan-duration) ease-in-out infinite alternate;
+}
+
 .artist-line {
   margin-top: 11px;
   color: var(--overlay-muted);
@@ -164,6 +174,18 @@ body {
   to {
     opacity: 1;
     transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes title-pan {
+  0%,
+  16% {
+    transform: translateX(0);
+  }
+
+  84%,
+  100% {
+    transform: translateX(calc(-1 * var(--title-overflow)));
   }
 }
 
@@ -219,6 +241,10 @@ body {
   }
 
   .now-playing.is-entering {
+    animation: none;
+  }
+
+  .track-title.is-overflowing .track-title-text {
     animation: none;
   }
 }

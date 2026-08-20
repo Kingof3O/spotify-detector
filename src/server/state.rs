@@ -6,10 +6,19 @@ use crate::media::{ArtworkStore, MediaState};
 pub struct AppState {
     pub(crate) media: watch::Receiver<MediaState>,
     pub(crate) artwork: ArtworkStore,
+    pub(crate) shutdown: watch::Sender<bool>,
 }
 
 impl AppState {
-    pub fn new(media: watch::Receiver<MediaState>, artwork: ArtworkStore) -> Self {
-        Self { media, artwork }
+    pub fn new(
+        media: watch::Receiver<MediaState>,
+        artwork: ArtworkStore,
+        shutdown: watch::Sender<bool>,
+    ) -> Self {
+        Self {
+            media,
+            artwork,
+            shutdown,
+        }
     }
 }

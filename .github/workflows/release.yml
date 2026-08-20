@@ -37,6 +37,7 @@ jobs:
           $stage = "dist"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
           Copy-Item "target\x86_64-pc-windows-msvc\release\spotify-overlay.exe" "$stage\spotify-overlay.exe"
+          Copy-Item "scripts\restart-and-check.cmd" "$stage\restart-and-check.cmd"
           Copy-Item "README.md" "$stage\README.md"
           Compress-Archive -Path "$stage\*" -DestinationPath "spotify-overlay-windows-x64.zip" -Force
 
