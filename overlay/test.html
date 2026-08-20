@@ -9,6 +9,8 @@
       (function () {
         "use strict";
 
+        const requestedTitle = new URLSearchParams(window.location.search).get("title");
+
         class TestWebSocket extends EventTarget {
           constructor(url) {
             super();
@@ -24,9 +26,11 @@
                     type: "state",
                     available: true,
                     source: "spotify-test",
-                    title: new URLSearchParams(window.location.search).has("long")
-                      ? "Guilty (The Long Midnight Remix Edition)"
-                      : "Guilty",
+                    title:
+                      requestedTitle ||
+                      (new URLSearchParams(window.location.search).has("long")
+                        ? "Guilty (The Long Midnight Remix Edition)"
+                        : "Guilty"),
                     artist: "TAEMIN",
                     album: "Test Album",
                     duration_ms: 215000,

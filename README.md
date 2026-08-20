@@ -67,7 +67,7 @@ cargo test
 cargo build --release
 ```
 
-On macOS or any development machine, start the app with `cargo run`, then open [http://127.0.0.1:18923/test](http://127.0.0.1:18923/test). The `/test` page supplies hard-coded track data and original test artwork to the production overlay code, so the layout and dominant-color behavior can be checked without Spotify or Windows media APIs. Use a 650 × 250 browser window for the intended canvas size. Add `?long=1` to the URL to test the long-title animation.
+On macOS or any development machine, start the app with `cargo run`, then open [http://127.0.0.1:18923/test](http://127.0.0.1:18923/test). The `/test` page supplies hard-coded track data and original test artwork to the production overlay code, so the layout and dominant-color behavior can be checked without Spotify or Windows media APIs. Use a 650 × 250 browser window for the intended canvas size. Add `?long=1` to test a long title, or use `?title=All%20Of%20The%20Girls%20You%20Loved%20Before` to reproduce a specific title.
 
 To build the Windows release from a Windows development machine:
 
