@@ -139,8 +139,9 @@
     const nextTitle = displayValue(next.title);
     const nextArtist = displayValue(next.artist);
     const nextSource = displayValue(next.source);
+    const titleChanged = resetMarquee || titleText.textContent !== nextTitle;
 
-    if (resetMarquee || titleText.textContent !== nextTitle) {
+    if (titleChanged) {
       resetTitleMarquee();
     }
     titleText.textContent = nextTitle;
@@ -153,7 +154,11 @@
     );
     card.classList.toggle("is-playing", next.playing === true);
     card.classList.remove("is-hidden");
-    queueTitleMeasurement();
+    // Timeline and playback events can update the state while the same track
+    // is playing. Do not remeasure those updates or the marquee will restart.
+    if (titleChanged) {
+      queueTitleMeasurement();
+    }
 
     const artworkUrl = displayValue(next.artwork_url);
     if (artworkUrl) {
