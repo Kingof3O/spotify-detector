@@ -5,7 +5,9 @@
   const artworkShell = document.querySelector("[data-artwork-shell]");
   const artwork = document.querySelector("[data-artwork]");
   const title = document.querySelector("[data-title]");
+  const titleTrack = document.querySelector("[data-title-track]");
   const titleText = document.querySelector("[data-title-text]");
+  const titleDuplicate = document.querySelector("[data-title-duplicate]");
   const artist = document.querySelector("[data-artist]");
   const source = document.querySelector("[data-source]");
   const paletteCanvas = document.createElement("canvas");
@@ -27,9 +29,12 @@
   if (typeof ResizeObserver === "function") {
     const titleObserver = new ResizeObserver(queueTitleMeasurement);
     titleObserver.observe(title);
-  } else {
-    window.addEventListener("resize", queueTitleMeasurement);
   }
+  window.addEventListener("resize", queueTitleMeasurement);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(queueTitleMeasurement);
+  }
+  window.addEventListener("load", queueTitleMeasurement, { once: true });
 
   artwork.addEventListener("load", function () {
     artworkShell.classList.add("has-artwork");
@@ -114,7 +119,7 @@
       clearTimeout(transitionTimer);
       transitionTimer = window.setTimeout(function () {
         if (!pendingState) return;
-        applyContent(pendingState);
+        applyContent(pendingState, true);
         pendingState = null;
         card.classList.remove("is-exiting");
         card.classList.add("is-entering");
@@ -128,14 +133,18 @@
     applyContent(next);
   }
 
-  function applyContent(next) {
+  function applyContent(next, resetMarquee) {
     currentTrackKey = trackKey(next);
 
     const nextTitle = displayValue(next.title);
     const nextArtist = displayValue(next.artist);
     const nextSource = displayValue(next.source);
 
+    if (resetMarquee || titleText.textContent !== nextTitle) {
+      resetTitleMarquee();
+    }
     titleText.textContent = nextTitle;
+    titleDuplicate.textContent = nextTitle;
     artist.textContent = nextArtist;
     source.textContent = nextSource;
     card.setAttribute(
@@ -303,23 +312,36 @@
 
   function queueTitleMeasurement() {
     window.cancelAnimationFrame(titleMeasureFrame);
-    titleMeasureFrame = window.requestAnimationFrame(updateTitleAnimation);
+    titleMeasureFrame = window.requestAnimationFrame(function () {
+      titleMeasureFrame = window.requestAnimationFrame(updateTitleMarquee);
+    });
   }
 
-  function updateTitleAnimation() {
-    titleMeasureFrame = 0;
-    title.classList.remove("is-overflowing");
-    title.style.removeProperty("--title-overflow");
-    title.style.removeProperty("--title-pan-duration");
+  function resetTitleMarquee() {
+    title.classList.remove("is-overflowing", "is-measuring");
+    title.style.removeProperty("--title-marquee-distance");
+    title.style.removeProperty("--title-marquee-duration");
+    titleTrack.style.removeProperty("transform");
+  }
 
-    const overflow = Math.ceil(titleText.scrollWidth - title.clientWidth);
+  function updateTitleMarquee() {
+    titleMeasureFrame = 0;
+
+    resetTitleMarquee();
+
+    const containerWidth = title.getBoundingClientRect().width;
+    const overflow = titleText.scrollWidth - title.clientWidth;
     if (overflow <= 2) return;
 
-    const oneWayDuration = Math.min(10, Math.max(5.5, 3.5 + overflow / 42));
-    const duration = oneWayDuration * 2;
-    title.style.setProperty("--title-overflow", `${overflow}px`);
-    title.style.setProperty("--title-pan-duration", `${duration.toFixed(2)}s`);
-    title.classList.add("is-overflowing");
+    title.classList.add("is-overflowing", "is-measuring");
+    const textWidth = Math.max(titleText.scrollWidth, titleText.getBoundingClientRect().width);
+    const gap = parseFloat(window.getComputedStyle(titleDuplicate).marginLeft) || 0;
+    const distance = textWidth + gap;
+    const scrollDuration = Math.min(32, Math.max(4.5, distance / 48));
+    const duration = scrollDuration / 0.76;
+    title.style.setProperty("--title-marquee-distance", `${distance}px`);
+    title.style.setProperty("--title-marquee-duration", `${duration.toFixed(2)}s`);
+    title.classList.remove("is-measuring");
   }
 
   function luminance(channels) {

@@ -15,7 +15,7 @@ There is no Spotify Web API, OAuth, cloud service, database, browser extension, 
 - Keeps one canonical media state in Rust and sends the full state immediately to each WebSocket client.
 - Keeps only the current artwork in memory and exposes it at `/artwork` with a versioned URL.
 - Updates only when media events arrive; the browser does not run a continuous progress-rendering loop.
-- Smoothly pans long track titles back and forth, pausing at both ends without shrinking the text.
+- Smoothly loops long track titles with a duplicated marquee track, pausing briefly at both ends without shrinking the text.
 - Serves the overlay, health endpoint, artwork, and WebSocket from `127.0.0.1:18923`.
 - Reconnects the OBS page with bounded exponential backoff when the native process restarts.
 
@@ -67,7 +67,16 @@ cargo test
 cargo build --release
 ```
 
-On macOS or any development machine, start the app with `cargo run`, then open [http://127.0.0.1:18923/test](http://127.0.0.1:18923/test). The `/test` page supplies hard-coded track data and original test artwork to the production overlay code, so the layout and dominant-color behavior can be checked without Spotify or Windows media APIs. Use a 650 × 250 browser window for the intended canvas size. Add `?long=1` to test a long title, or use `?title=All%20Of%20The%20Girls%20You%20Loved%20Before` to reproduce a specific title.
+On macOS or any development machine, the Windows media integration is unavailable, but the real server and production overlay can still be tested with hard-coded media data. Double-click `scripts/test-mac.command`, or run:
+
+```bash
+chmod +x scripts/test-mac.command
+./scripts/test-mac.command
+```
+
+The launcher starts `cargo run`, opens [http://127.0.0.1:18923/test?long=1](http://127.0.0.1:18923/test?long=1), and stops the server with Ctrl+C. The `/test` page uses the production overlay code, so the layout, artwork-driven color, track transition, and seamless long-title marquee can be checked without Spotify. Use a 650 × 250 browser window for the intended canvas size. Add `?title=All%20Of%20The%20Girls%20You%20Loved%20Before` to reproduce a specific title.
+
+If Rust reports that no toolchain is configured, run `rustup default stable` once and start the launcher again.
 
 To build the Windows release from a Windows development machine:
 

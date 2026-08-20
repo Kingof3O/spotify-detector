@@ -147,14 +147,42 @@ body {
   line-height: 1;
 }
 
+.track-marquee {
+  display: inline;
+  white-space: nowrap;
+}
+
 .track-title-text {
   display: inline-block;
   min-width: max-content;
-  transform: translateX(0);
+}
+
+.track-title-duplicate {
+  display: none;
+}
+
+.track-title.is-overflowing .track-marquee {
+  display: inline-flex;
+  width: max-content;
+  min-width: max-content;
+  align-items: baseline;
+  transform: translate3d(0, 0, 0);
+  animation: title-marquee var(--title-marquee-duration) linear infinite;
+  will-change: transform;
+}
+
+.track-title.is-overflowing.is-measuring .track-marquee {
+  animation: none;
 }
 
 .track-title.is-overflowing .track-title-text {
-  animation: title-pan var(--title-pan-duration) linear infinite;
+  display: block;
+  flex: 0 0 auto;
+}
+
+.track-title.is-overflowing .track-title-duplicate {
+  display: block;
+  margin-left: 32px;
 }
 
 .artist-line {
@@ -177,20 +205,15 @@ body {
   }
 }
 
-@keyframes title-pan {
+@keyframes title-marquee {
   0%,
-  6% {
-    transform: translateX(0);
+  12% {
+    transform: translate3d(0, 0, 0);
   }
 
-  44%,
-  56% {
-    transform: translateX(calc(-1 * var(--title-overflow)));
-  }
-
-  94%,
+  88%,
   100% {
-    transform: translateX(0);
+    transform: translate3d(calc(-1 * var(--title-marquee-distance)), 0, 0);
   }
 }
 
@@ -247,6 +270,11 @@ body {
 
   .now-playing.is-entering {
     animation: none;
+  }
+
+  .track-title.is-overflowing .track-marquee {
+    animation: none;
+    transform: translate3d(0, 0, 0);
   }
 
 }
