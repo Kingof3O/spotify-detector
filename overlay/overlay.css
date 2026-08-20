@@ -154,7 +154,7 @@ body {
 }
 
 .track-title.is-overflowing .track-title-text {
-  animation: title-pan var(--title-pan-duration) linear infinite alternate;
+  animation: title-pan var(--title-pan-duration) linear infinite;
 }
 
 .artist-line {
@@ -179,13 +179,18 @@ body {
 
 @keyframes title-pan {
   0%,
-  8% {
+  6% {
     transform: translateX(0);
   }
 
-  84%,
-  92% {
+  44%,
+  56% {
     transform: translateX(calc(-1 * var(--title-overflow)));
+  }
+
+  94%,
+  100% {
+    transform: translateX(0);
   }
 }
 

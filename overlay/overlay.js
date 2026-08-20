@@ -315,7 +315,8 @@
     const overflow = Math.ceil(titleText.scrollWidth - title.clientWidth);
     if (overflow <= 2) return;
 
-    const duration = Math.min(10, Math.max(5.5, 3.5 + overflow / 42));
+    const oneWayDuration = Math.min(10, Math.max(5.5, 3.5 + overflow / 42));
+    const duration = oneWayDuration * 2;
     title.style.setProperty("--title-overflow", `${overflow}px`);
     title.style.setProperty("--title-pan-duration", `${duration.toFixed(2)}s`);
     title.classList.add("is-overflowing");
