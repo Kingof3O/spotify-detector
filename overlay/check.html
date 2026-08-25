@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Spotify Stream Manager — Health Diagnostics</title>
+    <title>Stream Manager — Health Diagnostics</title>
     <link rel="stylesheet" href="/theme.css" />
     <link rel="stylesheet" href="/check.css" />
   </head>
@@ -13,10 +13,7 @@
       <div class="nav-container">
         <div class="nav-left">
           <a href="/check" class="nav-brand">
-            <div class="brand-icon">
-              <i class="fa-solid fa-compact-disc"></i>
-            </div>
-            <span class="brand-title">Spotify Stream Manager</span>
+            <span class="brand-title">Stream Manager</span>
           </a>
         </div>
 
@@ -55,7 +52,7 @@
             <span id="metric-dot-server" class="metric-dot ok"></span>
           </div>
           <span class="metric-label">Local Server</span>
-          <span id="metric-val-server" class="metric-value">Active</span>
+          <span id="metric-val-server" class="metric-value">Active (127.0.0.1:18923)</span>
         </div>
 
         <div class="metric-card">
@@ -94,16 +91,38 @@
 
       <!-- 2-Column Diagnostics Dashboard -->
       <div class="check-dashboard">
-        <!-- Left: Status Overview & Controls -->
+        <!-- Left: Status Overview & Environment Hub -->
         <div class="check-col-left">
           <section class="status-overview-card">
-            <div class="status-hero-pulse">
-              <div id="hero-pulse" class="status-pulse-ring ok">
-                <i class="fa-solid fa-heart-pulse"></i>
+            <div>
+              <div class="status-hero-pulse">
+                <div id="hero-pulse" class="status-pulse-ring ok">
+                  <i class="fa-solid fa-heart-pulse"></i>
+                </div>
+                <div class="status-hero-text">
+                  <h1 id="hero-title">System Status</h1>
+                  <p id="summary">Running live diagnostics…</p>
+                </div>
               </div>
-              <div class="status-hero-text">
-                <h1 id="hero-title">System Status</h1>
-                <p id="summary">Running live diagnostics…</p>
+
+              <!-- Environment Cardlet (Eliminates Empty Space) -->
+              <div class="env-cardlet">
+                <div class="env-row">
+                  <span class="env-key"><i class="fa-brands fa-windows"></i> Media Engine</span>
+                  <span class="env-val">GSMTC Zero-Poll</span>
+                </div>
+                <div class="env-row">
+                  <span class="env-key"><i class="fa-solid fa-microchip"></i> Architecture</span>
+                  <span class="env-val">Rust x86_64 LTO</span>
+                </div>
+                <div class="env-row">
+                  <span class="env-key"><i class="fa-solid fa-network-wired"></i> WebSocket</span>
+                  <span class="env-val">ws://127.0.0.1:18923/ws</span>
+                </div>
+                <div class="env-row">
+                  <span class="env-key"><i class="fa-solid fa-file-lines"></i> Log File</span>
+                  <span class="env-val">spotify-overlay.log</span>
+                </div>
               </div>
             </div>
 
@@ -123,7 +142,7 @@
 
         <!-- Right: Diagnostic Checklist Cards Stack -->
         <div class="check-col-right">
-          <section class="card" style="padding: 16px 18px;">
+          <section class="card" style="padding: 16px 18px; height: 100%;">
             <div class="card-header">
               <div class="card-title-group">
                 <div class="service-icon chat">

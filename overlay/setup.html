@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Spotify Stream Manager</title>
+    <title>Stream Manager</title>
     <link rel="stylesheet" href="/theme.css" />
     <link rel="stylesheet" href="/setup.css" />
   </head>
@@ -13,10 +13,7 @@
       <div class="nav-container">
         <div class="nav-left">
           <a href="/setup" class="nav-brand">
-            <div class="brand-icon">
-              <i class="fa-solid fa-compact-disc"></i>
-            </div>
-            <span class="brand-title">Spotify Stream Manager</span>
+            <span class="brand-title">Stream Manager</span>
           </a>
         </div>
 
@@ -58,9 +55,10 @@
       <!-- Global Notification Banner -->
       <div id="message" role="alert"></div>
 
-      <div class="setup-container">
-        <!-- ROW 1: INTEGRATIONS (Side-by-side Twitch & Spotify) -->
-        <div class="integrations-row">
+      <!-- 3-Column Ergonomic Dashboard (Zero Empty Gaps) -->
+      <div class="setup-3col-dashboard">
+        <!-- COLUMN 1: ACCOUNT INTEGRATIONS (350px) -->
+        <div class="setup-col">
           <!-- Twitch Bot Card -->
           <section class="card">
             <div class="card-header">
@@ -73,21 +71,19 @@
               <span id="twitch-status" class="status-badge">Not connected</span>
             </div>
 
-            <div class="grid-2">
-              <div class="field">
-                <label for="twitch-client-id">Twitch Client ID</label>
-                <div class="input-wrapper">
-                  <input id="twitch-client-id" type="password" placeholder="Application Client ID" autocomplete="off" spellcheck="false" />
-                  <button type="button" class="field-btn" data-toggle="twitch-client-id" title="Toggle visibility">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                </div>
+            <div class="field">
+              <label for="twitch-client-id">Twitch Client ID</label>
+              <div class="input-wrapper">
+                <input id="twitch-client-id" type="password" placeholder="Application Client ID" autocomplete="off" spellcheck="false" />
+                <button type="button" class="field-btn" data-toggle="twitch-client-id" title="Toggle visibility">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
               </div>
+            </div>
 
-              <div class="field">
-                <label for="twitch-channel">Target Streamer Channel</label>
-                <input id="twitch-channel" type="text" placeholder="channel_name (no @)" autocomplete="off" spellcheck="false" />
-              </div>
+            <div class="field">
+              <label for="twitch-channel">Target Streamer Channel</label>
+              <input id="twitch-channel" type="text" placeholder="channel_name (no @)" autocomplete="off" spellcheck="false" />
             </div>
 
             <div class="btn-group">
@@ -99,6 +95,14 @@
             </div>
 
             <p id="twitch-device"></p>
+
+            <div class="connection-info-cardlet">
+              <div class="info-cardlet-left">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>EventSub Listener</span>
+              </div>
+              <span id="twitch-sub-status" class="info-cardlet-right">Active</span>
+            </div>
           </section>
 
           <!-- Spotify Integration Card -->
@@ -113,26 +117,24 @@
               <span id="spotify-status" class="status-badge">Not connected</span>
             </div>
 
-            <div class="grid-2">
-              <div class="field">
-                <label for="spotify-client-id">Spotify Client ID</label>
-                <div class="input-wrapper">
-                  <input id="spotify-client-id" type="password" placeholder="Application Client ID" autocomplete="off" spellcheck="false" />
-                  <button type="button" class="field-btn" data-toggle="spotify-client-id" title="Toggle visibility">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                </div>
+            <div class="field">
+              <label for="spotify-client-id">Spotify Client ID</label>
+              <div class="input-wrapper">
+                <input id="spotify-client-id" type="password" placeholder="Application Client ID" autocomplete="off" spellcheck="false" />
+                <button type="button" class="field-btn" data-toggle="spotify-client-id" title="Toggle visibility">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
               </div>
+            </div>
 
-              <div class="field">
-                <label>Redirect URI</label>
-                <div class="copy-box">
-                  <code id="redirect-uri"></code>
-                  <button type="button" id="copy-redirect" class="copy-btn" title="Copy to clipboard">
-                    <i class="fa-solid fa-copy"></i>
-                    Copy
-                  </button>
-                </div>
+            <div class="field">
+              <label>Spotify Redirect URI</label>
+              <div class="copy-box">
+                <code id="redirect-uri"></code>
+                <button type="button" id="copy-redirect" class="copy-btn" title="Copy to clipboard">
+                  <i class="fa-solid fa-copy"></i>
+                  Copy
+                </button>
               </div>
             </div>
 
@@ -143,27 +145,35 @@
               </button>
               <button id="spotify-disconnect" class="btn-secondary">Disconnect</button>
             </div>
+
+            <div class="connection-info-cardlet">
+              <div class="info-cardlet-left">
+                <i class="fa-solid fa-compact-disc"></i>
+                <span>Queue Permission</span>
+              </div>
+              <span id="spotify-perm-status" class="info-cardlet-right">Granted</span>
+            </div>
           </section>
         </div>
 
-        <!-- ROW 2: BOT BEHAVIOR & MESSAGES (Side-by-side) -->
-        <div class="behavior-row">
-          <!-- Left: Commands & Rules -->
-          <section class="card">
+        <!-- COLUMN 2: BOT ENGINE & RULES (380px) -->
+        <div class="setup-col">
+          <section class="card" style="height: 100%; justify-content: space-between;">
             <div class="card-header">
               <div class="card-title-group">
                 <div class="service-icon chat">
                   <i class="fa-solid fa-gear"></i>
                 </div>
-                <h2 class="card-title">Rules &amp; Cooldowns</h2>
+                <h2 class="card-title">Bot Behavior &amp; Rules</h2>
               </div>
             </div>
 
-            <div class="switches-grid">
+            <!-- Primary Engine Toggles -->
+            <div style="display: flex; flex-direction: column; gap: 8px;">
               <div class="switch-row">
                 <label for="chat-enabled" class="switch-label">
-                  <span class="switch-title">Chat Commands</span>
-                  <span class="switch-desc">Respond in chat</span>
+                  <span class="switch-title">Chat Bot Engine</span>
+                  <span class="switch-desc">Answer commands directly in stream chat</span>
                 </label>
                 <label class="switch">
                   <input id="chat-enabled" type="checkbox" />
@@ -173,8 +183,8 @@
 
               <div class="switch-row">
                 <label for="requests-enabled" class="switch-label">
-                  <span class="switch-title">Song Requests</span>
-                  <span class="switch-desc">Queue to Spotify</span>
+                  <span class="switch-title">Song Request Queue</span>
+                  <span class="switch-desc">Queue requested tracks to Spotify</span>
                 </label>
                 <label class="switch">
                   <input id="requests-enabled" type="checkbox" />
@@ -183,74 +193,85 @@
               </div>
             </div>
 
-            <div class="grid-2">
-              <div class="field">
-                <label for="current-song-commands">Now-Playing Aliases</label>
-                <input id="current-song-commands" type="text" placeholder="!song, !np, !music" />
-              </div>
-              <div class="field">
-                <label for="request-commands">Request Aliases</label>
-                <input id="request-commands" type="text" placeholder="!sr, !request" />
-              </div>
+            <!-- Command Aliases -->
+            <div class="field">
+              <label for="current-song-commands">Now-Playing Aliases</label>
+              <input id="current-song-commands" type="text" placeholder="!song, !np, !music, !track" />
+            </div>
+
+            <div class="field">
+              <label for="request-commands">Song Request Aliases</label>
+              <input id="request-commands" type="text" placeholder="!sr, !request, !songrequest" />
+            </div>
+
+            <!-- Role Matrix & Cooldowns -->
+            <div class="field">
+              <label for="request-role">Minimum Role for Song Requests</label>
+              <select id="request-role">
+                <option value="everyone">Everyone (All Viewers)</option>
+                <option value="subscriber">Subscriber &amp; Above</option>
+                <option value="vip">VIP &amp; Above</option>
+                <option value="moderator">Moderator &amp; Above</option>
+                <option value="broadcaster">Broadcaster Only</option>
+              </select>
             </div>
 
             <div class="grid-2">
               <div class="field">
-                <label for="request-role">Minimum Request Role</label>
-                <select id="request-role">
-                  <option value="everyone">Everyone</option>
-                  <option value="subscriber">Subscriber &amp; Above</option>
-                  <option value="vip">VIP &amp; Above</option>
-                  <option value="moderator">Moderator &amp; Above</option>
-                  <option value="broadcaster">Broadcaster Only</option>
-                </select>
+                <label for="user-cooldown">User Cooldown (s)</label>
+                <input id="user-cooldown" type="number" min="0" max="86400" />
               </div>
-
-              <div class="grid-2">
-                <div class="field">
-                  <label for="user-cooldown">User (s)</label>
-                  <input id="user-cooldown" type="number" min="0" max="86400" />
-                </div>
-                <div class="field">
-                  <label for="global-cooldown">Global (s)</label>
-                  <input id="global-cooldown" type="number" min="0" max="86400" />
-                </div>
+              <div class="field">
+                <label for="global-cooldown">Global Cooldown (s)</label>
+                <input id="global-cooldown" type="number" min="0" max="86400" />
               </div>
             </div>
           </section>
+        </div>
 
-          <!-- Right: Single-Input Message Template Manager & Live Preview -->
-          <section class="card">
+        <!-- COLUMN 3: RESPONSE STUDIO & TWITCH CHAT SIMULATOR (1fr) -->
+        <div class="setup-col">
+          <section class="card" style="height: 100%; justify-content: space-between;">
             <div class="card-header">
               <div class="card-title-group">
                 <div class="service-icon chat">
                   <i class="fa-solid fa-comments"></i>
                 </div>
-                <h2 class="card-title">Message Templates</h2>
+                <h2 class="card-title">Message Response Studio</h2>
               </div>
-              <span class="helper-text" style="font-size: 10.5px; color: var(--text-muted);">Blank = silenced</span>
+              <span class="helper-text" style="font-size: 11px; color: var(--text-muted);">Blank = Silenced</span>
             </div>
 
-            <div class="template-selector-wrapper">
-              <label for="template-selector">Select Event Template</label>
+            <!-- Category Filter Tabs -->
+            <div class="category-pill-bar">
+              <button type="button" class="cat-pill active" data-cat="all">All Events</button>
+              <button type="button" class="cat-pill" data-cat="playback">Playback</button>
+              <button type="button" class="cat-pill" data-cat="requests">Requests &amp; Queue</button>
+              <button type="button" class="cat-pill" data-cat="permissions">Permissions</button>
+              <button type="button" class="cat-pill" data-cat="errors">Errors</button>
+            </div>
+
+            <!-- Event Selector Dropdown -->
+            <div class="field">
+              <label for="template-selector">Trigger Event</label>
               <select id="template-selector">
-                <optgroup label="Playback Status">
+                <optgroup label="Playback Status" data-group="playback">
                   <option value="now_playing" data-tokens="{track},{artist},{user}">Now Playing Track</option>
                   <option value="paused">Paused Track</option>
                   <option value="nothing_playing">Nothing Playing</option>
                 </optgroup>
-                <optgroup label="Requests &amp; Queue">
+                <optgroup label="Requests &amp; Queue" data-group="requests">
                   <option value="queued" data-tokens="{track},{user}">Song Queued Successfully</option>
                   <option value="usage" data-tokens="{command}">Command Usage Helper</option>
                   <option value="no_match">No Matching Track Found</option>
                   <option value="request_error">Generic Request Error</option>
                 </optgroup>
-                <optgroup label="Permissions &amp; Limits">
+                <optgroup label="Permissions &amp; Limits" data-group="permissions">
                   <option value="permission_denied">Permission Denied (Role)</option>
                   <option value="cooldown" data-tokens="{seconds},{user}">Cooldown Active</option>
                   <option value="rate_limited">Rate Limit Exceeded</option>
                 </optgroup>
-                <optgroup label="Errors &amp; Spotify API">
+                <optgroup label="Errors &amp; Spotify API" data-group="errors">
                   <option value="no_device">No Active Playback Device</option>
                   <option value="spotify_not_connected">Spotify Not Connected</option>
                   <option value="spotify_auth_expired">Authorization Expired</option>
@@ -260,22 +281,30 @@
               </select>
             </div>
 
+            <!-- Active Response Template Input -->
             <div class="field">
-              <label for="active-template-input">Template Response Text</label>
-              <input id="active-template-input" type="text" placeholder="Enter bot response message (or leave empty to silence)" autocomplete="off" spellcheck="false" />
+              <label for="active-template-input">Bot Response Message</label>
+              <input id="active-template-input" type="text" placeholder="Enter bot response (or leave empty to silence)" autocomplete="off" spellcheck="false" />
               <div id="active-tag-pills" class="tag-pills"></div>
             </div>
 
-            <!-- Integrated Live Twitch Chat Preview -->
-            <div class="chat-preview-box">
-              <div class="chat-preview-label">
-                <i class="fa-brands fa-twitch"></i>
-                <span>Live Chat Preview</span>
+            <!-- Authentic Live Twitch Chat Simulator -->
+            <div class="twitch-chat-simulator">
+              <div class="simulator-header">
+                <span><i class="fa-brands fa-twitch"></i> Live Twitch Chat Simulator</span>
+                <span id="sim-trigger-label" style="color: var(--text-muted); font-size: 10px;">Trigger: !song</span>
               </div>
-              <div class="chat-message-bubble">
-                <span class="chat-bot-badge">BOT</span>
-                <span id="preview-bot-name" class="chat-bot-user">OverlayBot:</span>
-                <span id="preview-bot-text" class="chat-message-text">Now playing: Starboy by The Weeknd</span>
+              <div class="simulator-messages">
+                <div class="sim-msg-row">
+                  <span class="badge-broadcaster">Streamer</span>
+                  <span class="sim-user-streamer">Streamer:</span>
+                  <span id="sim-user-cmd" class="sim-user-msg">!song</span>
+                </div>
+                <div class="sim-msg-row">
+                  <span class="badge-bot">BOT</span>
+                  <span id="preview-bot-name" class="sim-user-bot">OverlayBot:</span>
+                  <span id="preview-bot-text" class="sim-bot-msg">Now playing: vampire by Olivia Rodrigo</span>
+                </div>
               </div>
             </div>
           </section>

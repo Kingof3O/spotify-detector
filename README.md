@@ -1,6 +1,6 @@
-# Spotify Stream Manager
+# Stream Manager
 
-`spotify-overlay` (Spotify Stream Manager) is a low-resource, local Windows desktop utility that mirrors Spotify's current Windows media session into a transparent, customizable OBS Browser Source. It runs entirely on the streaming PC:
+`spotify-overlay` (Stream Manager) is a low-resource, local Windows desktop utility that mirrors Spotify's current Windows media session into a transparent, customizable OBS Browser Source. It runs entirely on the streaming PC:
 
 ```text
 Spotify Desktop → Windows GSMTC events → Rust agent → localhost WebSocket → OBS

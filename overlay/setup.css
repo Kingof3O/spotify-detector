@@ -1,28 +1,42 @@
-/* Fluid Full-Viewport Layout (Fills 100% of the screen width & height) */
-.setup-container {
+/* 3-Column Ergonomic Dashboard Layout (Zero empty space) */
+.setup-3col-dashboard {
+  display: grid;
+  grid-template-columns: 350px 380px minmax(0, 1fr);
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.setup-col {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  flex: 1;
   min-height: 0;
 }
 
-/* Row 1: Integrations (Twitch & Spotify side-by-side) */
-.integrations-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  flex: 1;
-  min-height: 0;
+/* Cardlet inside Integration cards */
+.connection-info-cardlet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 11.5px;
 }
 
-/* Row 2: Behavior & Messages (Rules on Left, Message Editor on Right) */
-.behavior-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  flex: 1.1;
-  min-height: 0;
+.info-cardlet-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-secondary);
+}
+
+.info-cardlet-right {
+  font-weight: 700;
+  color: #6ee7b7;
 }
 
 /* Form Fields */
@@ -149,18 +163,12 @@ select:focus {
 }
 
 /* Switch Controls */
-.switches-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
 .switch-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 9px;
+  padding: 10px 14px;
+  border-radius: 10px;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -173,13 +181,13 @@ select:focus {
 }
 
 .switch-title {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .switch-desc {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
@@ -232,25 +240,60 @@ select:focus {
   gap: 10px;
 }
 
-/* Single-Input Message Template Manager */
-.template-selector-wrapper {
+/* Category Filter Tabs for Message Studio */
+.category-pill-bar {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
+.category-pill-bar::-webkit-scrollbar { display: none; }
+
+.cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 7px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.cat-pill:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.cat-pill.active {
+  background: rgba(168, 85, 247, 0.25);
+  color: #f3e8ff;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+/* Tag Insert Pills */
 .tag-pills {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 3px;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 .tag-pill {
   display: inline-flex;
   align-items: center;
-  padding: 2px 7px;
-  border-radius: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
   font-size: 11px;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   background: rgba(168, 85, 247, 0.14);
@@ -265,67 +308,100 @@ select:focus {
   color: #fff;
 }
 
-/* Integrated Live Twitch Chat Preview Simulation */
-.chat-preview-box {
-  padding: 10px 12px;
-  border-radius: 11px;
-  background: rgba(8, 4, 16, 0.95);
-  border: 1px solid rgba(145, 70, 255, 0.24);
+/* Authentic Live Twitch Chat Simulator */
+.twitch-chat-simulator {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #0e0c13;
+  border: 1px solid rgba(145, 70, 255, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   margin-top: auto;
 }
 
-.chat-preview-label {
-  font-size: 10.5px;
+.simulator-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
   font-weight: 800;
   color: #bf94ff;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.chat-message-bubble {
+.simulator-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sim-msg-row {
   display: flex;
   align-items: baseline;
-  gap: 7px;
-  font-size: 12.5px;
+  gap: 8px;
+  font-size: 13px;
   line-height: 1.4;
 }
 
-.chat-bot-badge {
-  font-size: 9.5px;
+.badge-broadcaster {
+  font-size: 9px;
   font-weight: 800;
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: 3px;
+  background: #e91e63;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.badge-bot {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
   background: #9146ff;
   color: #fff;
   text-transform: uppercase;
 }
 
-.chat-bot-user {
+.sim-user-streamer {
+  font-weight: 700;
+  color: #ff75b5;
+}
+
+.sim-user-bot {
   font-weight: 700;
   color: #bf94ff;
 }
 
-.chat-message-text {
+.sim-user-msg {
+  color: #adadb8;
+}
+
+.sim-bot-msg {
   color: #efeff1;
   word-break: break-word;
 }
 
-/* Responsive Collapse for Narrow OBS Docks (< 920px) */
-@media (max-width: 920px) {
-  .integrations-row,
-  .behavior-row {
-    grid-template-columns: 1fr;
-    gap: 12px;
+/* Responsive Collapse (< 1200px and < 860px) */
+@media (max-width: 1200px) {
+  .setup-3col-dashboard {
+    grid-template-columns: 1fr 1fr;
   }
 
-  .switches-grid {
+  .setup-col:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 860px) {
+  .setup-3col-dashboard {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .grid-2 {

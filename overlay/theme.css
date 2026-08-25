@@ -5,9 +5,9 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --bg: #040206;
   --bg-elevated: #0d0718;
-  --card-bg: rgba(14, 8, 25, 0.68);
+  --card-bg: rgba(13, 7, 24, 0.72);
   --card-border: rgba(168, 85, 247, 0.2);
-  --card-glow: 0 16px 40px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(168, 85, 247, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 0 24px rgba(168, 85, 247, 0.04);
+  --card-glow: 0 16px 40px -10px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(168, 85, 247, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 0 24px rgba(168, 85, 247, 0.04);
   --text-primary: #fdfcff;
   --text-secondary: #ddd4ec;
   --text-muted: #a59bb8;
@@ -24,7 +24,7 @@
   --error: #f43f5e;
   --error-bg: rgba(244, 63, 94, 0.15);
   --error-border: rgba(244, 63, 94, 0.35);
-  --input-bg: rgba(6, 3, 12, 0.82);
+  --input-bg: rgba(6, 3, 12, 0.84);
   --input-border: rgba(168, 85, 247, 0.22);
   --input-focus: rgba(192, 132, 252, 0.9);
 }
@@ -54,15 +54,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Minimalist Pro Console Header (Full-width) */
+/* Minimalist Pro Header (Clean typography, zero icon on left) */
 header {
   position: sticky;
   top: 0;
   z-index: 50;
   width: 100%;
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  background: rgba(4, 2, 8, 0.88);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  background: rgba(4, 2, 8, 0.9);
   border-bottom: 1px solid var(--card-border);
 }
 
@@ -78,33 +78,23 @@ header {
 .nav-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
   text-decoration: none;
   color: var(--text-primary);
 }
 
-.brand-icon {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: var(--accent-gradient);
-  box-shadow: 0 2px 10px rgba(168, 85, 247, 0.4);
-  color: #fff;
-  font-size: 14px;
-}
-
 .brand-title {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff, #e9d5ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Center Segmented Navigation Pills */
@@ -219,18 +209,18 @@ main {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* High-Density Glass Card Component */
+/* Glass Card Component */
 .card {
-  padding: 18px 22px;
+  padding: 16px 18px;
   border-radius: 16px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--card-glow);
-  backdrop-filter: blur(32px) saturate(190%);
-  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  backdrop-filter: blur(36px) saturate(200%);
+  -webkit-backdrop-filter: blur(36px) saturate(200%);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .card-header {
@@ -245,16 +235,16 @@ main {
 .card-title-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
 }
 
 .service-icon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 7px;
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .service-icon.twitch {
@@ -276,7 +266,7 @@ main {
 }
 
 .card-title {
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -315,7 +305,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  padding: 8px 15px;
+  padding: 8px 14px;
   border-radius: 9px;
   font-size: 12.5px;
   font-weight: 700;

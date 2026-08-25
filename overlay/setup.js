@@ -1,6 +1,6 @@
 /**
- * Spotify Overlay Setup Controller & Services
- * Ultra-Compact OOP Architecture with Single-Input Message Manager & Live Chat Simulation
+ * Stream Manager Setup Controller & Services
+ * Modern 3-Column OOP Architecture with Live Twitch Chat Simulation
  */
 
 /**
@@ -159,14 +159,17 @@ class SetupController {
       redirectUri: document.getElementById("redirect-uri"),
       copyRedirectBtn: document.getElementById("copy-redirect"),
 
-      // Live Chat Preview
+      // Live Chat Preview Simulator
       previewBotName: document.getElementById("preview-bot-name"),
       previewBotText: document.getElementById("preview-bot-text"),
+      simUserCmd: document.getElementById("sim-user-cmd"),
+      simTriggerLabel: document.getElementById("sim-trigger-label"),
 
       // Twitch
       twitchClientId: document.getElementById("twitch-client-id"),
       twitchChannel: document.getElementById("twitch-channel"),
       twitchStatus: document.getElementById("twitch-status"),
+      twitchSubStatus: document.getElementById("twitch-sub-status"),
       twitchConnectBtn: document.getElementById("twitch-connect"),
       twitchDisconnectBtn: document.getElementById("twitch-disconnect"),
       twitchDevice: document.getElementById("twitch-device"),
@@ -174,6 +177,7 @@ class SetupController {
       // Spotify
       spotifyClientId: document.getElementById("spotify-client-id"),
       spotifyStatus: document.getElementById("spotify-status"),
+      spotifyPermStatus: document.getElementById("spotify-perm-status"),
       spotifyConnectBtn: document.getElementById("spotify-connect"),
       spotifyDisconnectBtn: document.getElementById("spotify-disconnect"),
 
@@ -227,6 +231,16 @@ class SetupController {
       this.updateLivePreview();
     });
 
+    // Category Filter Pills
+    document.querySelectorAll(".cat-pill").forEach((pill) => {
+      pill.addEventListener("click", () => {
+        document.querySelectorAll(".cat-pill").forEach((p) => p.classList.remove("active"));
+        pill.classList.add("active");
+        const category = pill.getAttribute("data-cat");
+        this.filterCategoryOptgroups(category);
+      });
+    });
+
     // Actions
     this.dom.saveBtn.addEventListener("click", () => this.handleSave());
     this.dom.twitchConnectBtn.addEventListener("click", () => this.handleTwitchConnect());
@@ -256,6 +270,27 @@ class SetupController {
       this.dom.copyRedirectBtn.innerHTML = `<i class="fa-solid fa-check"></i> Copied!`;
       setTimeout(() => { this.dom.copyRedirectBtn.innerHTML = originalHTML; }, 2000);
     });
+  }
+
+  filterCategoryOptgroups(category) {
+    const optgroups = this.dom.templateSelector.querySelectorAll("optgroup");
+    let firstVisibleOption = null;
+
+    optgroups.forEach((group) => {
+      const groupCat = group.getAttribute("data-group");
+      const match = category === "all" || groupCat === category;
+      group.style.display = match ? "" : "none";
+      if (match && !firstVisibleOption) {
+        firstVisibleOption = group.querySelector("option");
+      }
+    });
+
+    if (firstVisibleOption) {
+      this.saveActiveInputToMemory();
+      this.dom.templateSelector.value = firstVisibleOption.value;
+      this.currentTemplateKey = firstVisibleOption.value;
+      this.loadActiveTemplateFromMemory();
+    }
   }
 
   saveActiveInputToMemory() {
@@ -302,16 +337,31 @@ class SetupController {
     const rawText = this.messages[this.currentTemplateKey] || "";
     this.dom.previewBotName.textContent = `${this.activeBotName}:`;
 
+    // Contextual simulated command
+    let triggerCmd = "!song";
+    if (this.currentTemplateKey === "queued" || this.currentTemplateKey === "no_match" || this.currentTemplateKey === "request_error") {
+      triggerCmd = "!sr vampire";
+    } else if (this.currentTemplateKey === "usage") {
+      triggerCmd = "!sr";
+    } else if (this.currentTemplateKey === "cooldown") {
+      triggerCmd = "!song (too fast)";
+    } else if (this.currentTemplateKey === "permission_denied") {
+      triggerCmd = "!sr (viewer role)";
+    }
+
+    this.dom.simUserCmd.textContent = triggerCmd;
+    this.dom.simTriggerLabel.textContent = `Trigger: ${triggerCmd}`;
+
     if (!rawText.trim()) {
-      this.dom.previewBotText.innerHTML = `<em>(Message is blank / silenced)</em>`;
+      this.dom.previewBotText.innerHTML = `<em>(Message is blank / silenced in chat)</em>`;
       return;
     }
 
     const rendered = rawText
-      .replace(/\{user\}/g, "Alex")
-      .replace(/\{track\}/g, "Starboy")
-      .replace(/\{title\}/g, "Starboy")
-      .replace(/\{artist\}/g, "The Weeknd")
+      .replace(/\{user\}/g, "Streamer")
+      .replace(/\{track\}/g, "vampire")
+      .replace(/\{title\}/g, "vampire")
+      .replace(/\{artist\}/g, "Olivia Rodrigo")
       .replace(/\{seconds\}/g, "25")
       .replace(/\{command\}/g, "!sr <song name>");
 
@@ -380,6 +430,8 @@ class SetupController {
       !twitchConnected && twitchStatus.startsWith("error")
     );
     this.dom.quickDotTwitch.className = `status-dot ${twitchConnected ? "connected" : (twitchStatus.startsWith("error") ? "error" : "")}`;
+    this.dom.twitchSubStatus.textContent = twitchConnected ? "Connected" : "Idle";
+    this.dom.twitchSubStatus.style.color = twitchConnected ? "#6ee7b7" : "var(--text-muted)";
 
     const spotifyConnected = data.status?.spotify_connected;
     const spotifyStatus = data.status?.spotify_status || "Not connected";
@@ -389,6 +441,8 @@ class SetupController {
       !spotifyConnected && spotifyStatus.startsWith("error")
     );
     this.dom.quickDotSpotify.className = `status-dot ${spotifyConnected ? "connected" : (spotifyStatus.startsWith("error") ? "error" : "")}`;
+    this.dom.spotifyPermStatus.textContent = spotifyConnected ? "Authorized" : "Not Linked";
+    this.dom.spotifyPermStatus.style.color = spotifyConnected ? "#6ee7b7" : "var(--text-muted)";
 
     if (data.twitch_device?.state === "pending") {
       this.dom.twitchDevice.textContent = `Authorize at ${data.twitch_device.verification_uri} with code ${data.twitch_device.user_code}.`;

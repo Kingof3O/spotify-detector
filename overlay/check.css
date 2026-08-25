@@ -11,8 +11,8 @@
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--card-glow);
-  backdrop-filter: blur(32px) saturate(190%);
-  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  backdrop-filter: blur(36px) saturate(200%);
+  -webkit-backdrop-filter: blur(36px) saturate(200%);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -55,7 +55,7 @@
 }
 
 .metric-value {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
@@ -94,8 +94,8 @@
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--card-glow);
-  backdrop-filter: blur(32px) saturate(190%);
-  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  backdrop-filter: blur(36px) saturate(200%);
+  -webkit-backdrop-filter: blur(36px) saturate(200%);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -153,6 +153,39 @@
   line-height: 1.4;
 }
 
+/* Environment Info Cardlet (Eliminates empty card space) */
+.env-cardlet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 14px;
+}
+
+.env-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+}
+
+.env-key {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-muted);
+}
+
+.env-val {
+  font-weight: 600;
+  color: #ddd4ec;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+}
+
 .status-actions {
   display: flex;
   flex-direction: column;
@@ -193,7 +226,7 @@
   grid-template-columns: 210px 85px minmax(0, 1fr);
   gap: 12px;
   align-items: center;
-  padding: 10px 14px;
+  padding: 11px 14px;
   border-radius: 11px;
   background: rgba(8, 4, 16, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.05);
