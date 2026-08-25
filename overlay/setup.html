@@ -5,32 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spotify Overlay Setup</title>
     <style>
-      :root { color-scheme: dark; font-family: "Segoe UI", Arial, sans-serif; }
-      body { margin: 0; background: #111214; color: #f0ddd1; }
-      main { width: min(760px, calc(100% - 32px)); margin: 24px auto; }
-      h1 { margin: 0 0 8px; font-size: 28px; }
-      p, small { color: #c9b6b2; }
-      section { margin: 18px 0; padding: 18px; border: 1px solid #3c3638; border-radius: 14px; background: #211d20; }
-      h2 { margin: 0 0 12px; font-size: 18px; }
-      label { display: block; margin: 10px 0; color: #dfceca; }
-      input, select { display: block; width: 100%; margin-top: 5px; padding: 9px 10px; border: 1px solid #51474a; border-radius: 8px; background: #141316; color: #fff; box-sizing: border-box; }
-      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-      .checks { display: flex; flex-wrap: wrap; gap: 14px; }
-      .checks label { display: flex; align-items: center; gap: 7px; margin: 4px 0; }
-      .checks input { width: auto; margin: 0; }
-      button, a.button { display: inline-block; margin: 7px 7px 0 0; padding: 9px 13px; border: 0; border-radius: 8px; background: #a86e92; color: #fff; cursor: pointer; text-decoration: none; }
-      button.secondary { background: #51474a; }
-      #message { min-height: 20px; color: #e7bf9c; }
-      .status { color: #9bd5a6; }
-      .error { color: #f09b9b; }
-      code { color: #f0ddd1; }
-      @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+      :root { color-scheme: dark; font-family: "Segoe UI", Inter, Arial, sans-serif; --ink: #f8f3ff; --muted: #b8aecb; --line: rgba(255,255,255,.14); --glass: rgba(20, 15, 38, .64); --purple: #b66cff; --pink: #ff75c8; }
+      * { box-sizing: border-box; }
+      body { min-height: 100vh; margin: 0; overflow-x: hidden; color: var(--ink); background: #080711; background-image: radial-gradient(900px 540px at -8% -12%, rgba(145, 70, 255, .42), transparent 65%), radial-gradient(700px 500px at 108% 4%, rgba(255, 67, 181, .22), transparent 62%), radial-gradient(620px 520px at 50% 115%, rgba(57, 89, 255, .19), transparent 68%); }
+      body::before, body::after { position: fixed; z-index: -1; width: 280px; height: 280px; border-radius: 50%; content: ""; filter: blur(70px); opacity: .34; pointer-events: none; }
+      body::before { top: 28%; left: -130px; background: #6c38ff; }
+      body::after { right: -120px; bottom: 12%; background: #d638ae; }
+      main { width: min(900px, calc(100% - 32px)); margin: 0 auto; padding: 34px 0 64px; }
+      .hero { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+      .hero-mark { display: grid; width: 58px; height: 58px; place-items: center; border: 1px solid rgba(255,255,255,.25); border-radius: 18px; background: linear-gradient(135deg, rgba(187,107,255,.8), rgba(255,100,191,.5)); box-shadow: 0 14px 38px rgba(126, 51, 255, .32), inset 0 1px rgba(255,255,255,.42); font-size: 30px; }
+      .eyebrow { margin-bottom: 5px; color: #c49aff; font-size: 11px; font-weight: 800; letter-spacing: .18em; }
+      h1 { margin: 0; background: linear-gradient(90deg, #fff, #e3c5ff 52%, #ffb5e3); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; }
+      h2 { margin: 0 0 16px; color: #fff; font-size: 19px; }
+      p, small { color: var(--muted); }
+      .hero p { margin: 8px 0 0; font-size: 14px; }
+      section { position: relative; margin: 16px 0; padding: 22px; border: 1px solid var(--line); border-radius: 20px; background: linear-gradient(145deg, rgba(39, 25, 69, .72), rgba(17, 13, 31, .55)); box-shadow: 0 22px 55px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.09); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+      section::before { position: absolute; top: 0; right: 22px; left: 22px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent); content: ""; }
+      label { display: block; margin: 12px 0; color: #e7ddf5; font-size: 14px; }
+      input, select, textarea { display: block; width: 100%; margin-top: 7px; padding: 11px 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 11px; outline: none; background: rgba(5, 4, 14, .58); color: #fff; font: inherit; box-shadow: inset 0 1px rgba(255,255,255,.04); transition: border-color .18s, box-shadow .18s, background .18s; }
+      input:focus, select:focus, textarea:focus { border-color: rgba(197, 125, 255, .9); background: rgba(13, 8, 28, .78); box-shadow: 0 0 0 3px rgba(171, 94, 255, .16), inset 0 1px rgba(255,255,255,.08); }
+      textarea { min-height: 54px; resize: vertical; }
+      details { margin: 18px 0 4px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; background: rgba(5, 3, 14, .22); }
+      summary { cursor: pointer; color: #e9d8ff; font-weight: 700; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      .checks { display: flex; flex-wrap: wrap; gap: 16px; }
+      .checks label { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+      .checks input { width: 16px; height: 16px; margin: 0; accent-color: #bd71ff; }
+      button, a.button { display: inline-flex; align-items: center; justify-content: center; margin: 8px 8px 0 0; padding: 10px 15px; border: 1px solid rgba(255,255,255,.16); border-radius: 11px; background: linear-gradient(135deg, #a75cff, #de62b5); box-shadow: 0 9px 22px rgba(170, 76, 255, .24), inset 0 1px rgba(255,255,255,.3); color: #fff; cursor: pointer; text-decoration: none; font-family: inherit; font-size: 13px; font-weight: 700; transition: transform .18s, filter .18s; }
+      button:hover, a.button:hover { filter: brightness(1.12); transform: translateY(-1px); }
+      button.secondary { background: rgba(255,255,255,.1); box-shadow: inset 0 1px rgba(255,255,255,.1); }
+      #message { min-height: 24px; margin: 4px 0 10px; color: #f2c5ff; font-size: 13px; }
+      .status { color: #8ff0c1; }
+      .error { color: #ff9eae; }
+      code { color: #e6c9ff; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+      @media (max-width: 560px) { main { padding-top: 22px; } .hero { align-items: flex-start; } .hero-mark { width: 48px; height: 48px; border-radius: 15px; font-size: 24px; } section { padding: 18px; border-radius: 17px; } .row { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body>
     <main>
-      <h1>Twitch &amp; Spotify setup</h1>
-      <p>This page stays local on this computer. The OBS overlay works without connecting either account.</p>
+      <div class="hero"><div class="hero-mark">♫</div><div><div class="eyebrow">LOCAL CONTROL CENTER</div><h1>Twitch &amp; Spotify setup</h1><p>This page stays local on this computer. The OBS overlay works without connecting either account.</p></div></div>
       <p><a class="button" href="/check">Open health check</a></p>
       <div id="message"></div>
 
@@ -67,6 +80,25 @@
           <label>Per-viewer cooldown (seconds)<input id="user-cooldown" type="number" min="0" max="86400" /></label>
           <label>Global cooldown (seconds)<input id="global-cooldown" type="number" min="0" max="86400" /></label>
         </div>
+        <details>
+          <summary>Bot messages and errors</summary>
+          <small>Available placeholders: <code>{user}</code>, <code>{track}</code>, <code>{title}</code>, <code>{artist}</code>, <code>{seconds}</code>, and <code>{command}</code>. Leave a message blank to suppress it. Technical errors are written to <code>spotify-overlay.log</code>, not Twitch chat.</small>
+          <label>Now playing<textarea id="message-now-playing"></textarea></label>
+          <label>Paused track<textarea id="message-paused"></textarea></label>
+          <label>Nothing playing<textarea id="message-nothing-playing"></textarea></label>
+          <label>Song queued successfully<textarea id="message-queued"></textarea></label>
+          <label>Song-request usage<textarea id="message-usage"></textarea></label>
+          <label>Permission denied<textarea id="message-permission-denied"></textarea></label>
+          <label>Cooldown<textarea id="message-cooldown"></textarea></label>
+          <label>Generic request error<textarea id="message-request-error"></textarea></label>
+          <label>No matching track<textarea id="message-no-match"></textarea></label>
+          <label>No active Spotify device<textarea id="message-no-device"></textarea></label>
+          <label>Spotify not connected<textarea id="message-spotify-not-connected"></textarea></label>
+          <label>Spotify authorization expired<textarea id="message-spotify-auth-expired"></textarea></label>
+          <label>Spotify request denied<textarea id="message-spotify-denied"></textarea></label>
+          <label>Spotify rate limit<textarea id="message-rate-limited"></textarea></label>
+          <label>Spotify quota exhausted<textarea id="message-quota-exceeded"></textarea></label>
+        </details>
         <button id="save">Save settings</button>
       </section>
     </main>
@@ -98,6 +130,22 @@
           $("request-role").value = settings.chat.request_role;
           $("user-cooldown").value = settings.chat.request_user_cooldown_secs;
           $("global-cooldown").value = settings.chat.request_global_cooldown_secs;
+          const messages = settings.chat.messages;
+          $("message-now-playing").value = messages.now_playing;
+          $("message-paused").value = messages.paused;
+          $("message-nothing-playing").value = messages.nothing_playing;
+          $("message-queued").value = messages.queued;
+          $("message-usage").value = messages.usage;
+          $("message-permission-denied").value = messages.permission_denied;
+          $("message-cooldown").value = messages.cooldown;
+          $("message-request-error").value = messages.request_error;
+          $("message-no-match").value = messages.no_match;
+          $("message-no-device").value = messages.no_device;
+          $("message-spotify-not-connected").value = messages.spotify_not_connected;
+          $("message-spotify-auth-expired").value = messages.spotify_auth_expired;
+          $("message-spotify-denied").value = messages.spotify_denied;
+          $("message-rate-limited").value = messages.rate_limited;
+          $("message-quota-exceeded").value = messages.quota_exceeded;
         }
         function fillStatus(data, overwriteSettings = false) {
           csrf = data.csrf_token;
@@ -109,14 +157,16 @@
           else if (data.status.twitch_status === "disabled") setStatus($("twitch-status"), "Commands are disabled — enable them below and save.");
         }
         async function load(initial = false) { try { fillStatus(await api("/api/setup/status"), initial); } catch (error) { message(error.message, true); } }
-        ["twitch-client-id", "twitch-channel", "spotify-client-id", "chat-enabled", "requests-enabled", "current-song-commands", "request-commands", "request-role", "user-cooldown", "global-cooldown"].forEach((id) => {
+        ["twitch-client-id", "twitch-channel", "spotify-client-id", "chat-enabled", "requests-enabled", "current-song-commands", "request-commands", "request-role", "user-cooldown", "global-cooldown", "message-now-playing", "message-paused", "message-nothing-playing", "message-queued", "message-usage", "message-permission-denied", "message-cooldown", "message-request-error", "message-no-match", "message-no-device", "message-spotify-not-connected", "message-spotify-auth-expired", "message-spotify-denied", "message-rate-limited", "message-quota-exceeded"].forEach((id) => {
           $(id).addEventListener("input", () => { dirty = true; });
           $(id).addEventListener("change", () => { dirty = true; });
         });
         function settingsPayload() {
           return {
               twitch_client_id: $("twitch-client-id").value.trim(), twitch_channel: $("twitch-channel").value.trim(), spotify_client_id: $("spotify-client-id").value.trim(),
-              chat: { enabled: $("chat-enabled").checked, requests_enabled: $("requests-enabled").checked, current_song_commands: aliases($("current-song-commands").value), request_commands: aliases($("request-commands").value), request_role: $("request-role").value, request_user_cooldown_secs: Number($("user-cooldown").value), request_global_cooldown_secs: Number($("global-cooldown").value) }
+              chat: { enabled: $("chat-enabled").checked, requests_enabled: $("requests-enabled").checked, current_song_commands: aliases($("current-song-commands").value), request_commands: aliases($("request-commands").value), request_role: $("request-role").value, request_user_cooldown_secs: Number($("user-cooldown").value), request_global_cooldown_secs: Number($("global-cooldown").value), messages: {
+                now_playing: $("message-now-playing").value, paused: $("message-paused").value, nothing_playing: $("message-nothing-playing").value, queued: $("message-queued").value, usage: $("message-usage").value, permission_denied: $("message-permission-denied").value, cooldown: $("message-cooldown").value, request_error: $("message-request-error").value, no_match: $("message-no-match").value, no_device: $("message-no-device").value, spotify_not_connected: $("message-spotify-not-connected").value, spotify_auth_expired: $("message-spotify-auth-expired").value, spotify_denied: $("message-spotify-denied").value, rate_limited: $("message-rate-limited").value, quota_exceeded: $("message-quota-exceeded").value
+              } }
           };
         }
         async function saveSettings(showMessage = true) {

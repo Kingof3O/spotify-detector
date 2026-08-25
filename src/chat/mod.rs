@@ -12,7 +12,7 @@ use tokio::{
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 use crate::{
-    config::{ChatConfig, RequestRole},
+    config::{ChatConfig, ChatMessages, RequestRole},
     integration::{
         IntegrationState, SpotifyApi, SpotifyError, TwitchApi, TwitchError, TwitchToken,
     },
@@ -398,7 +398,8 @@ async fn handle_event(
         .any(|alias| alias.eq_ignore_ascii_case(&command))
     {
         if config.integrations.chat.enabled {
-            let response = current_song_response(&state.media.borrow());
+            let response =
+                current_song_response(&state.media.borrow(), &config.integrations.chat.messages);
             send_chat(
                 twitch,
                 token,
@@ -427,7 +428,13 @@ async fn handle_event(
             token,
             client_id,
             broadcaster_id,
-            "Song requests are not available for your role.",
+            &render_template(
+                &config.integrations.chat.messages.permission_denied,
+                &[(
+                    "user",
+                    event.chatter_user_name.as_deref().unwrap_or("viewer"),
+                )],
+            ),
             reply_message_id.as_deref(),
         )
         .await;
@@ -442,7 +449,10 @@ async fn handle_event(
             token,
             client_id,
             broadcaster_id,
-            "Usage: !songrequest <Spotify track link or song search>",
+            &render_template(
+                &config.integrations.chat.messages.usage,
+                &[("command", &command)],
+            ),
             reply_message_id.as_deref(),
         )
         .await;
@@ -456,10 +466,15 @@ async fn handle_event(
                 token,
                 client_id,
                 broadcaster_id,
-                &format!(
-                    "@{} please wait {}s before requesting another song.",
-                    event.chatter_user_name.as_deref().unwrap_or("viewer"),
-                    remaining
+                &render_template(
+                    &config.integrations.chat.messages.cooldown,
+                    &[
+                        (
+                            "user",
+                            event.chatter_user_name.as_deref().unwrap_or("viewer"),
+                        ),
+                        ("seconds", &remaining.to_string()),
+                    ],
                 ),
                 reply_message_id.as_deref(),
             )
@@ -487,11 +502,16 @@ async fn handle_event(
                 .lock()
                 .await
                 .commit(&user_id, &config.integrations.chat);
-            let response = format!(
-                "@{} queued: {} — {}",
-                event.chatter_user_name.as_deref().unwrap_or("viewer"),
-                track.name,
-                track.artist
+            let response = render_template(
+                &config.integrations.chat.messages.queued,
+                &[
+                    (
+                        "user",
+                        event.chatter_user_name.as_deref().unwrap_or("viewer"),
+                    ),
+                    ("title", &track.name),
+                    ("artist", &track.artist),
+                ],
             );
             send_chat(
                 twitch,
@@ -511,7 +531,11 @@ async fn handle_event(
                 token,
                 client_id,
                 broadcaster_id,
-                &spotify_error_message(stage, error),
+                &spotify_error_message(
+                    &config.integrations.chat.messages,
+                    event.chatter_user_name.as_deref().unwrap_or("viewer"),
+                    error,
+                ),
                 reply_message_id.as_deref(),
             )
             .await;
@@ -528,6 +552,9 @@ async fn send_chat(
     response: &str,
     parent: Option<&str>,
 ) {
+    if response.trim().is_empty() {
+        return;
+    }
     let response = truncate_response(response);
     if let Err(error) = twitch
         .send_chat(
@@ -544,77 +571,58 @@ async fn send_chat(
     }
 }
 
-fn current_song_response(state: &MediaState) -> String {
+fn current_song_response(state: &MediaState, messages: &ChatMessages) -> String {
     let Some(title) = state.title.as_deref() else {
-        return "Nothing is playing right now.".to_owned();
+        return messages.nothing_playing.clone();
     };
+    let artist = state.artist.as_deref().unwrap_or_default();
     let track = match state.artist.as_deref() {
         Some(artist) if !artist.is_empty() => format!("{title} — {artist}"),
         _ => title.to_owned(),
     };
-    if state.playing {
-        format!("Now playing: {track}")
+    let template = if state.playing {
+        &messages.now_playing
     } else {
-        format!("Paused: {track}")
-    }
+        &messages.paused
+    };
+    render_template(
+        template,
+        &[("track", &track), ("title", title), ("artist", artist)],
+    )
 }
 
-fn spotify_error_message(stage: &str, error: SpotifyError) -> String {
-    let label = if stage == "queue" { "queue" } else { "search" };
-    match error {
-        SpotifyError::NotConnected => {
-            "Spotify is not connected. Open Setup Twitch & Spotify.".to_owned()
-        }
-        SpotifyError::InvalidInput(message) => message,
-        SpotifyError::NoMatch => "No matching Spotify track was found.".to_owned(),
-        SpotifyError::NoDevice => "Spotify has no active playback device.".to_owned(),
-        SpotifyError::Authentication(_) => {
-            "Spotify authorization expired. Reconnect it in setup.".to_owned()
-        }
-        SpotifyError::Forbidden(_) => {
-            "Spotify rejected the request. Check Premium status and app access.".to_owned()
-        }
-        SpotifyError::RateLimited(seconds) => format!(
-            "Spotify is rate-limited; try again in {}s.",
-            seconds.unwrap_or(30)
+fn spotify_error_message(messages: &ChatMessages, user: &str, error: SpotifyError) -> String {
+    let (template, seconds) = match error {
+        SpotifyError::NotConnected => (&messages.spotify_not_connected, None),
+        SpotifyError::NoMatch => (&messages.no_match, None),
+        SpotifyError::NoDevice => (&messages.no_device, None),
+        SpotifyError::Authentication(_) => (&messages.spotify_auth_expired, None),
+        SpotifyError::Forbidden(_) => (&messages.spotify_denied, None),
+        SpotifyError::RateLimited(seconds) => (
+            &messages.rate_limited,
+            Some(seconds.unwrap_or(30).to_string()),
         ),
-        SpotifyError::QuotaExceeded => {
-            "Spotify development quota is exhausted; try again later.".to_owned()
-        }
-        SpotifyError::Api(status, body) => format!(
-            "Spotify {label} failed (HTTP {status}): {}",
-            spotify_api_message(&body)
-        ),
-        SpotifyError::Network(error) if error.is_decode() => {
-            format!("Spotify {label} returned an unreadable response: {error}")
-        }
-        SpotifyError::Network(_) => format!("Spotify {label} could not reach Spotify."),
-        SpotifyError::Storage(error) => {
-            format!("Spotify {label} could not read saved authorization: {error}")
-        }
-    }
+        SpotifyError::QuotaExceeded => (&messages.quota_exceeded, None),
+        SpotifyError::InvalidInput(_)
+        | SpotifyError::Api(_, _)
+        | SpotifyError::Network(_)
+        | SpotifyError::Storage(_) => (&messages.request_error, None),
+    };
+    render_template(
+        template,
+        &[
+            ("user", user),
+            ("seconds", seconds.as_deref().unwrap_or("30")),
+        ],
+    )
 }
 
-fn spotify_api_message(body: &str) -> String {
-    let message = serde_json::from_str::<serde_json::Value>(body)
-        .ok()
-        .and_then(|value| {
-            value
-                .get("error")
-                .and_then(|error| error.get("message").and_then(|message| message.as_str()))
-                .or_else(|| {
-                    value
-                        .get("error_description")
-                        .and_then(|message| message.as_str())
-                })
-                .map(str::to_owned)
+fn render_template(template: &str, values: &[(&str, &str)]) -> String {
+    values
+        .iter()
+        .fold(template.to_owned(), |message, (key, value)| {
+            message.replace(&format!("{{{key}}}"), value)
         })
-        .unwrap_or_else(|| body.trim().chars().take(160).collect());
-    if message.is_empty() {
-        "no error details returned".to_owned()
-    } else {
-        message
-    }
 }
 
 fn truncate_response(response: &str) -> String {
@@ -843,10 +851,10 @@ async fn set_chat_status(
 #[cfg(test)]
 mod tests {
     use super::{
-        current_song_response, parse_command, spotify_api_message, ChatConfig, CooldownState,
+        current_song_response, parse_command, render_template, ChatConfig, CooldownState,
         EventSubEnvelope, SeenMessageIds, UserRole,
     };
-    use crate::media::MediaState;
+    use crate::{config::ChatMessages, media::MediaState};
 
     #[test]
     fn current_song_response_handles_playing_and_paused() {
@@ -854,9 +862,16 @@ mod tests {
         state.title = Some("Song".to_owned());
         state.artist = Some("Artist".to_owned());
         state.playing = true;
-        assert_eq!(current_song_response(&state), "Now playing: Song — Artist");
+        let messages = ChatMessages::default();
+        assert_eq!(
+            current_song_response(&state, &messages),
+            "Now playing: Song — Artist"
+        );
         state.playing = false;
-        assert_eq!(current_song_response(&state), "Paused: Song — Artist");
+        assert_eq!(
+            current_song_response(&state, &messages),
+            "Paused: Song — Artist"
+        );
     }
 
     #[test]
@@ -931,10 +946,13 @@ mod tests {
     }
 
     #[test]
-    fn spotify_api_error_extracts_safe_message() {
+    fn message_templates_replace_known_placeholders() {
         assert_eq!(
-            spotify_api_message(r#"{"error":{"status":400,"message":"Invalid request"}}"#),
-            "Invalid request"
+            render_template(
+                "@{user} queued {title}",
+                &[("user", "viewer"), ("title", "Song")]
+            ),
+            "@viewer queued Song"
         );
     }
 }

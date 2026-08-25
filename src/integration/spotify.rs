@@ -148,7 +148,9 @@ impl SpotifyApi {
         let request = self
             .client
             .post(format!("{API_BASE}/me/player/queue"))
-            .query(&[("uri", track_uri)]);
+            .query(&[("uri", track_uri)])
+            .header(reqwest::header::CONTENT_LENGTH, "0")
+            .body(Vec::new());
         let response = self
             .send_authenticated(state, client_id, request, true)
             .await?;
@@ -392,6 +394,7 @@ async fn map_api_error(response: Response, queue_request: bool) -> SpotifyError 
         .ok()
         .map(|body| body.error.reason)
         .unwrap_or_default();
+    let logged_body = body.chars().take(1024).collect::<String>();
     match status {
         StatusCode::UNAUTHORIZED => {
             SpotifyError::Authentication("Spotify authorization expired".to_owned())
@@ -403,7 +406,7 @@ async fn map_api_error(response: Response, queue_request: bool) -> SpotifyError 
         StatusCode::NOT_FOUND => SpotifyError::NoMatch,
         StatusCode::TOO_MANY_REQUESTS if reason == "QUOTA_EXCEEDED" => SpotifyError::QuotaExceeded,
         StatusCode::TOO_MANY_REQUESTS => SpotifyError::RateLimited(retry_after),
-        _ => SpotifyError::Api(status.as_u16(), body),
+        _ => SpotifyError::Api(status.as_u16(), logged_body),
     }
 }
 

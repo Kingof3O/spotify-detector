@@ -5,30 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spotify Overlay Health Check</title>
     <style>
-      :root { color-scheme: dark; font-family: "Segoe UI", Arial, sans-serif; }
-      body { margin: 0; background: #111214; color: #f0ddd1; }
-      main { width: min(820px, calc(100% - 32px)); margin: 24px auto; }
-      h1 { margin: 0 0 6px; font-size: 28px; }
-      p { color: #c9b6b2; }
-      .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 18px 0; }
-      button, a { padding: 9px 13px; border: 0; border-radius: 8px; background: #a86e92; color: #fff; cursor: pointer; text-decoration: none; }
-      a { background: #51474a; }
-      #summary { margin: 12px 0; padding: 13px 16px; border-radius: 10px; font-weight: 600; }
-      .summary-ok, .ok { background: #193c29; color: #b5e5bf; }
-      .summary-warning, .warning { background: #4a391d; color: #f2d69f; }
-      .summary-error, .error { background: #4b2429; color: #f2b2b5; }
-      .check { display: grid; grid-template-columns: 190px 110px 1fr; gap: 12px; align-items: start; margin: 8px 0; padding: 12px 14px; border: 1px solid #3c3638; border-radius: 10px; background: #211d20; }
-      .check strong { color: #f0ddd1; }
-      .check .state { font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: .06em; }
-      .detail { color: #d4c1bd; }
-      .action { display: block; margin-top: 5px; color: #efc1a4; }
-      @media (max-width: 650px) { .check { grid-template-columns: 1fr 90px; } .detail { grid-column: 1 / -1; } }
+      :root { color-scheme: dark; font-family: "Segoe UI", Inter, Arial, sans-serif; --ink: #f8f3ff; --muted: #b8aecb; --line: rgba(255,255,255,.14); }
+      * { box-sizing: border-box; }
+      body { min-height: 100vh; margin: 0; overflow-x: hidden; color: var(--ink); background: #080711; background-image: radial-gradient(900px 540px at -8% -12%, rgba(145, 70, 255, .42), transparent 65%), radial-gradient(700px 500px at 108% 4%, rgba(255, 67, 181, .22), transparent 62%), radial-gradient(620px 520px at 50% 115%, rgba(57, 89, 255, .19), transparent 68%); }
+      body::before, body::after { position: fixed; z-index: -1; width: 280px; height: 280px; border-radius: 50%; content: ""; filter: blur(70px); opacity: .34; pointer-events: none; }
+      body::before { top: 28%; left: -130px; background: #6c38ff; }
+      body::after { right: -120px; bottom: 12%; background: #d638ae; }
+      main { width: min(900px, calc(100% - 32px)); margin: 0 auto; padding: 34px 0 64px; }
+      .hero { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+      .hero-mark { display: grid; width: 58px; height: 58px; place-items: center; border: 1px solid rgba(255,255,255,.25); border-radius: 18px; background: linear-gradient(135deg, rgba(187,107,255,.8), rgba(255,100,191,.5)); box-shadow: 0 14px 38px rgba(126, 51, 255, .32), inset 0 1px rgba(255,255,255,.42); font-size: 29px; }
+      .eyebrow { margin-bottom: 5px; color: #c49aff; font-size: 11px; font-weight: 800; letter-spacing: .18em; }
+      h1 { margin: 0; background: linear-gradient(90deg, #fff, #e3c5ff 52%, #ffb5e3); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; }
+      p { margin: 9px 0 0; color: var(--muted); font-size: 14px; }
+      .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; }
+      button, a { display: inline-flex; align-items: center; justify-content: center; padding: 10px 15px; border: 1px solid rgba(255,255,255,.16); border-radius: 11px; background: linear-gradient(135deg, #a75cff, #de62b5); box-shadow: 0 9px 22px rgba(170, 76, 255, .24), inset 0 1px rgba(255,255,255,.3); color: #fff; cursor: pointer; text-decoration: none; font: 700 13px "Segoe UI", Arial, sans-serif; transition: transform .18s, filter .18s; }
+      button:hover, a:hover { filter: brightness(1.12); transform: translateY(-1px); }
+      a { background: rgba(255,255,255,.1); box-shadow: inset 0 1px rgba(255,255,255,.1); }
+      #updated { color: #8e83a3; font-size: 12px; }
+      #summary { margin: 14px 0; padding: 15px 17px; border: 1px solid rgba(255,255,255,.14); border-radius: 15px; font-weight: 700; box-shadow: 0 14px 38px rgba(0,0,0,.2), inset 0 1px rgba(255,255,255,.12); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+      .summary-ok, .ok { background: linear-gradient(135deg, rgba(28, 128, 85, .56), rgba(16, 60, 54, .55)); color: #b5f5d0; }
+      .summary-warning, .warning { background: linear-gradient(135deg, rgba(131, 90, 24, .58), rgba(70, 44, 25, .55)); color: #f6dca9; }
+      .summary-error, .error { background: linear-gradient(135deg, rgba(143, 42, 72, .58), rgba(71, 27, 50, .55)); color: #ffc1cb; }
+      .check { display: grid; grid-template-columns: 190px 100px 1fr; gap: 12px; align-items: start; margin: 10px 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 15px; background: linear-gradient(145deg, rgba(39, 25, 69, .62), rgba(17, 13, 31, .48)); box-shadow: 0 15px 35px rgba(0,0,0,.22), inset 0 1px rgba(255,255,255,.08); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
+      .check strong { color: #fff; }
+      .check .state { padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-align: center; }
+      .detail { color: #d4c7e5; line-height: 1.45; }
+      .action { display: block; margin-top: 5px; color: #edb6ff; }
+      @media (max-width: 650px) { main { padding-top: 22px; } .hero { align-items: flex-start; } .hero-mark { width: 48px; height: 48px; border-radius: 15px; font-size: 24px; } .check { grid-template-columns: 1fr 84px; } .detail { grid-column: 1 / -1; } }
     </style>
   </head>
   <body>
     <main>
-      <h1>Spotify Overlay Health Check</h1>
-      <p>Local diagnostics for OBS, Windows media detection, Twitch chat, and Spotify requests.</p>
+      <div class="hero"><div class="hero-mark">✓</div><div><div class="eyebrow">DIAGNOSTICS • LOCAL ONLY</div><h1>Spotify Overlay Health Check</h1><p>Local diagnostics for OBS, Windows media detection, Twitch chat, and Spotify requests.</p></div></div>
       <div class="toolbar"><button id="refresh">Refresh live checks</button><a href="/setup">Open setup</a><span id="updated"></span></div>
       <div id="summary">Checking…</div>
       <div id="checks"></div>

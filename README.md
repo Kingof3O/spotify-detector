@@ -75,7 +75,9 @@ The default commands are:
 - `!song` or `!playingnow` — reports the current Windows media-session track.
 - `!sr <song title, Spotify URL, or Spotify URI>` or `!songrequest ...` — searches Spotify and adds the selected track to Spotify’s native queue.
 
-Command aliases, minimum role, and per-viewer/global cooldowns are configurable on the setup page. Requests require Spotify Premium and an active Spotify playback device. The app does not provide an editable queue or remove/reorder tracks already handed to Spotify.
+Command aliases, minimum role, per-viewer/global cooldowns, and every user-facing bot response are configurable on the setup page. Message templates support placeholders such as `{user}`, `{track}`, `{title}`, `{artist}`, `{seconds}`, and `{command}`. Requests require Spotify Premium and an active Spotify playback device. The app does not provide an editable queue or remove/reorder tracks already handed to Spotify.
+
+Detailed Twitch and Spotify API failures are written to `spotify-overlay.log` beside the executable. Twitch viewers receive only the configured friendly error message; raw HTTP responses are never posted in chat.
 
 Each streamer supplies their own Twitch and Spotify Client IDs. The app stores non-sensitive settings under `%LOCALAPPDATA%\SpotifyOverlay` and protects OAuth tokens with Windows DPAPI. No public relay or Nightbot URL is required; Nightbot cannot reach the local `127.0.0.1` service.
 

@@ -20,6 +20,81 @@ pub enum RequestRole {
     Broadcaster,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(default)]
+pub struct ChatMessages {
+    pub now_playing: String,
+    pub paused: String,
+    pub nothing_playing: String,
+    pub queued: String,
+    pub usage: String,
+    pub permission_denied: String,
+    pub cooldown: String,
+    pub request_error: String,
+    pub no_match: String,
+    pub no_device: String,
+    pub spotify_not_connected: String,
+    pub spotify_auth_expired: String,
+    pub spotify_denied: String,
+    pub rate_limited: String,
+    pub quota_exceeded: String,
+}
+
+impl Default for ChatMessages {
+    fn default() -> Self {
+        Self {
+            now_playing: "Now playing: {track}".to_owned(),
+            paused: "Paused: {track}".to_owned(),
+            nothing_playing: "Nothing is playing right now.".to_owned(),
+            queued: "@{user} queued: {title} — {artist}".to_owned(),
+            usage: "Usage: {command} <Spotify track link or song search>".to_owned(),
+            permission_denied: "Song requests are not available for your role.".to_owned(),
+            cooldown: "@{user} please wait {seconds}s before requesting another song.".to_owned(),
+            request_error: "@{user} could not add that song right now.".to_owned(),
+            no_match: "No matching Spotify track was found.".to_owned(),
+            no_device: "Spotify has no active playback device.".to_owned(),
+            spotify_not_connected: "Spotify is not connected. Ask the streamer to open setup."
+                .to_owned(),
+            spotify_auth_expired:
+                "Spotify authorization expired. Ask the streamer to reconnect it.".to_owned(),
+            spotify_denied:
+                "Spotify rejected the request. Ask the streamer to check Premium and app access."
+                    .to_owned(),
+            rate_limited: "Spotify is rate-limited; try again in {seconds}s.".to_owned(),
+            quota_exceeded: "Spotify request quota is exhausted; try again later.".to_owned(),
+        }
+    }
+}
+
+impl ChatMessages {
+    fn validate(&self) -> Result<(), ConfigError> {
+        for (field, value) in [
+            ("now_playing", &self.now_playing),
+            ("paused", &self.paused),
+            ("nothing_playing", &self.nothing_playing),
+            ("queued", &self.queued),
+            ("usage", &self.usage),
+            ("permission_denied", &self.permission_denied),
+            ("cooldown", &self.cooldown),
+            ("request_error", &self.request_error),
+            ("no_match", &self.no_match),
+            ("no_device", &self.no_device),
+            ("spotify_not_connected", &self.spotify_not_connected),
+            ("spotify_auth_expired", &self.spotify_auth_expired),
+            ("spotify_denied", &self.spotify_denied),
+            ("rate_limited", &self.rate_limited),
+            ("quota_exceeded", &self.quota_exceeded),
+        ] {
+            if value.chars().count() > 480 {
+                return Err(ConfigError::MessageTooLong {
+                    field: field.to_owned(),
+                });
+            }
+        }
+        Ok(())
+    }
+}
+
 impl Default for RequestRole {
     fn default() -> Self {
         Self::Everyone
@@ -36,6 +111,7 @@ pub struct ChatConfig {
     pub request_role: RequestRole,
     pub request_user_cooldown_secs: u64,
     pub request_global_cooldown_secs: u64,
+    pub messages: ChatMessages,
 }
 
 impl Default for ChatConfig {
@@ -48,6 +124,7 @@ impl Default for ChatConfig {
             request_role: RequestRole::Everyone,
             request_user_cooldown_secs: 300,
             request_global_cooldown_secs: 10,
+            messages: ChatMessages::default(),
         }
     }
 }
@@ -59,6 +136,7 @@ impl ChatConfig {
         if self.request_user_cooldown_secs > 86_400 || self.request_global_cooldown_secs > 86_400 {
             return Err(ConfigError::CooldownOutOfRange);
         }
+        self.messages.validate()?;
         Ok(())
     }
 }
@@ -267,6 +345,8 @@ pub enum ConfigError {
     InvalidAlias { field: String, value: String },
     #[error("cooldowns must be between 0 and 86400 seconds")]
     CooldownOutOfRange,
+    #[error("bot message '{field}' must be 480 characters or fewer")]
+    MessageTooLong { field: String },
     #[error("could not serialize configuration for {path}: {source}")]
     Serialize {
         path: PathBuf,
@@ -294,6 +374,13 @@ mod tests {
             current_song_commands: vec!["song now".to_owned()],
             ..ChatConfig::default()
         };
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn oversized_bot_messages_are_rejected() {
+        let mut config = ChatConfig::default();
+        config.messages.now_playing = "x".repeat(481);
         assert!(config.validate().is_err());
     }
 }
