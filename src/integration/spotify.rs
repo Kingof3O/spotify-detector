@@ -98,7 +98,18 @@ impl SpotifyApi {
         client_id: &str,
         query: &str,
     ) -> Result<SpotifyTrack, SpotifyError> {
-        let query = query.trim();
+        let clean_query = query
+            .chars()
+            .filter(|c| {
+                !c.is_control()
+                    && *c != '\u{200b}'
+                    && *c != '\u{feff}'
+                    && *c != '\u{034f}'
+                    && *c != '\u{200c}'
+                    && *c != '\u{200d}'
+            })
+            .collect::<String>();
+        let query = clean_query.trim();
         if query.is_empty() {
             return Err(SpotifyError::InvalidInput(
                 "please provide a song title or Spotify track link".to_owned(),
@@ -122,7 +133,7 @@ impl SpotifyApi {
         let request = self.client.get(format!("{API_BASE}/search")).query(&[
             ("q", query),
             ("type", "track"),
-            ("limit", "15"),
+            ("limit", "5"),
         ]);
         let response = self
             .send_authenticated(state, client_id, request, false)
