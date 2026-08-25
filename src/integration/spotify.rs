@@ -122,7 +122,7 @@ impl SpotifyApi {
         let request = self.client.get(format!("{API_BASE}/search")).query(&[
             ("q", query),
             ("type", "track"),
-            ("limit", "1"),
+            ("limit", "15"),
         ]);
         let response = self
             .send_authenticated(state, client_id, request, false)
@@ -131,12 +131,7 @@ impl SpotifyApi {
             .json::<SearchResponse>()
             .await
             .map_err(SpotifyError::Network)?;
-        body.tracks
-            .items
-            .into_iter()
-            .next()
-            .map(SpotifyTrack::from)
-            .ok_or(SpotifyError::NoMatch)
+        select_best_track_match(query, body.tracks.items).ok_or(SpotifyError::NoMatch)
     }
 
     pub async fn add_to_queue(
@@ -312,16 +307,142 @@ struct TrackPage {
     items: Vec<TrackResponse>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct TrackResponse {
     uri: String,
     name: String,
+    #[serde(default)]
     artists: Vec<ArtistResponse>,
+    #[serde(default)]
+    popularity: Option<u32>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct ArtistResponse {
     name: String,
+}
+
+fn normalize_for_matching(text: &str) -> String {
+    text.to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() || c.is_whitespace() { c } else { ' ' })
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn strip_version_noise(title: &str) -> &str {
+    let lower = title.to_lowercase();
+    let noise_markers = [
+        " - remastered", " - live", " (remastered", " (live",
+        " (feat.", " (feat ", " (with ", " - feat.", " [feat.",
+    ];
+    let mut cut_idx = title.len();
+    for marker in noise_markers {
+        if let Some(pos) = lower.find(marker) {
+            if pos < cut_idx {
+                cut_idx = pos;
+            }
+        }
+    }
+    title[..cut_idx].trim()
+}
+
+fn score_track_match(query: &str, track: &TrackResponse, index: usize, total_items: usize) -> i32 {
+    let norm_query = normalize_for_matching(query);
+    if norm_query.is_empty() {
+        return 0;
+    }
+
+    let norm_title = normalize_for_matching(&track.name);
+    let base_title = normalize_for_matching(strip_version_noise(&track.name));
+    let artists_str = track
+        .artists
+        .iter()
+        .map(|a| a.name.as_str())
+        .collect::<Vec<_>>()
+        .join(" ");
+    let norm_artists = normalize_for_matching(&artists_str);
+    let full_string = format!("{norm_title} {norm_artists}");
+
+    let mut score = 0i32;
+
+    // 1. Exact Title match (Highest priority)
+    if norm_title == norm_query || base_title == norm_query {
+        score += 10000;
+    }
+    // 2. Exact Title + Artist match (user typed song and artist)
+    else if full_string == norm_query || format!("{norm_artists} {norm_title}") == norm_query {
+        score += 9000;
+    }
+    // 3. Title starts with query or query starts with title
+    else if norm_title.starts_with(&norm_query) || base_title.starts_with(&norm_query) {
+        let diff = (norm_title.len() as i32 - norm_query.len() as i32).abs();
+        score += (8000 - diff * 20).max(5000);
+    } else if norm_query.starts_with(&norm_title) || norm_query.starts_with(&base_title) {
+        score += 7500;
+    }
+    // 4. Title contains query or query contains title
+    else if norm_title.contains(&norm_query) || base_title.contains(&norm_query) {
+        let diff = (norm_title.len() as i32 - norm_query.len() as i32).abs();
+        score += (7000 - diff * 20).max(4000);
+    } else if norm_query.contains(&norm_title) && !norm_title.is_empty() {
+        score += 6500;
+    }
+
+    // 5. Word token matching across title & artist
+    let query_tokens: Vec<&str> = norm_query.split_whitespace().collect();
+    if !query_tokens.is_empty() {
+        let title_tokens: Vec<&str> = norm_title.split_whitespace().collect();
+        let full_tokens: Vec<&str> = full_string.split_whitespace().collect();
+
+        let mut matched_title_tokens = 0;
+        let mut matched_full_tokens = 0;
+
+        for token in &query_tokens {
+            if title_tokens.contains(token) {
+                matched_title_tokens += 1;
+            }
+            if full_tokens.contains(token) {
+                matched_full_tokens += 1;
+            }
+        }
+
+        let full_match_ratio = matched_full_tokens as f32 / query_tokens.len() as f32;
+        let title_match_ratio = matched_title_tokens as f32 / query_tokens.len() as f32;
+
+        if title_match_ratio >= 0.99 {
+            score += 4000;
+        } else if full_match_ratio >= 0.99 {
+            score += 3500;
+        } else {
+            score += (full_match_ratio * 2000.0) as i32;
+        }
+    }
+
+    // Add popularity bonus if available
+    if let Some(pop) = track.popularity {
+        score += pop.min(100) as i32;
+    }
+
+    // Minor position tie-breaker for Spotify's top rankings
+    score += (total_items.saturating_sub(index)) as i32 * 5;
+
+    score
+}
+
+fn select_best_track_match(query: &str, items: Vec<TrackResponse>) -> Option<SpotifyTrack> {
+    if items.is_empty() {
+        return None;
+    }
+
+    let total = items.len();
+    items
+        .into_iter()
+        .enumerate()
+        .max_by_key(|(idx, track)| score_track_match(query, track, *idx, total))
+        .map(|(_, track)| SpotifyTrack::from(track))
 }
 
 #[derive(Deserialize)]
@@ -497,5 +618,42 @@ mod tests {
             SpotifyApi::pkce_challenge("test-verifier"),
             "JBbiqONGWPaAmwXk_8bT6UnlPfrn65D32eZlJS-zGG0"
         );
+    }
+
+    #[test]
+    fn selects_accurate_track_over_unrelated_popular_results() {
+        use super::{select_best_track_match, ArtistResponse, TrackResponse};
+
+        let items = vec![
+            TrackResponse {
+                uri: "spotify:track:trending1".to_owned(),
+                name: "back to friends".to_owned(),
+                artists: vec![ArtistResponse {
+                    name: "sombr".to_owned(),
+                }],
+                popularity: Some(90),
+            },
+            TrackResponse {
+                uri: "spotify:track:target2".to_owned(),
+                name: "The Cut That Always Bleeds".to_owned(),
+                artists: vec![ArtistResponse {
+                    name: "Conan Gray".to_owned(),
+                }],
+                popularity: Some(75),
+            },
+            TrackResponse {
+                uri: "spotify:track:other3".to_owned(),
+                name: "Always Bleeds".to_owned(),
+                artists: vec![ArtistResponse {
+                    name: "Various Artists".to_owned(),
+                }],
+                popularity: Some(20),
+            },
+        ];
+
+        let matched = select_best_track_match("the cut that always bleeds", items).unwrap();
+        assert_eq!(matched.uri, "spotify:track:target2");
+        assert_eq!(matched.name, "The Cut That Always Bleeds");
+        assert_eq!(matched.artist, "Conan Gray");
     }
 }
