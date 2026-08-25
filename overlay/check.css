@@ -1,32 +1,113 @@
-/* Hero Diagnostics Overview Banner */
-.hero-status-card {
-  padding: 22px 24px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(30, 18, 54, 0.7), rgba(18, 10, 32, 0.6));
+/* Quick Metrics Grid (Full width across top) */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.metric-card {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--card-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--card-glow);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metric-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  flex-wrap: wrap;
-  backdrop-filter: blur(16px);
 }
 
-.hero-status-left {
+.metric-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  background: rgba(168, 85, 247, 0.14);
+  color: #d8b4fe;
+  font-size: 12px;
+}
+
+.metric-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.metric-dot.ok { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.metric-dot.warning { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
+.metric-dot.error { background: var(--error); box-shadow: 0 0 8px var(--error); }
+
+.metric-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-value {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 2-Column Diagnostics Layout */
+.check-dashboard {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.check-col-left {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 16px;
 }
 
+.check-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Status Overview Card */
+.status-overview-card {
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-glow);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.status-hero-pulse {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .status-pulse-ring {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  font-size: 18px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.25s ease;
@@ -50,24 +131,24 @@
   color: var(--error);
 }
 
-.hero-status-content h1 {
-  font-size: clamp(19px, 3.5vw, 24px);
+.status-hero-text h1 {
+  font-size: 17px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   color: var(--text-primary);
 }
 
 #summary {
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: var(--text-muted);
-  margin-top: 3px;
+  margin-top: 2px;
+  line-height: 1.4;
 }
 
-.hero-actions {
+.status-actions {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .spin {
@@ -79,147 +160,49 @@
   to { transform: rotate(360deg); }
 }
 
-/* Quick Metrics Grid */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+#updated {
+  font-size: 11.5px;
+  color: var(--text-muted);
 }
 
-.metric-card {
-  padding: 16px;
-  border-radius: 14px;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-glow);
-  backdrop-filter: blur(16px);
+/* Diagnostic Checklist Stack */
+#checks {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.metric-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.metric-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  display: grid;
-  place-items: center;
-  background: rgba(168, 85, 247, 0.14);
-  color: #d8b4fe;
-  border: 1px solid rgba(168, 85, 247, 0.25);
-}
-
-.metric-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--text-muted);
-}
-
-.metric-dot.ok { background: var(--success); box-shadow: 0 0 8px var(--success); }
-.metric-dot.warning { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
-.metric-dot.error { background: var(--error); box-shadow: 0 0 8px var(--error); }
-
-.metric-label {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.metric-value {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Diagnostic Checklist Section */
-.section-card {
-  padding: 22px;
-  border-radius: 18px;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-glow);
-  backdrop-filter: blur(16px);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  flex-wrap: wrap;
-}
-
-.section-title-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-#updated {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-/* Check Cards */
-#checks {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .check-item {
   display: grid;
-  grid-template-columns: 220px 90px 1fr;
-  gap: 14px;
+  grid-template-columns: 200px 85px minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
-  padding: 14px 16px;
-  border-radius: 13px;
-  background: rgba(10, 6, 20, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 12px 14px;
+  border-radius: 11px;
+  background: rgba(10, 6, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   transition: all 0.15s ease;
 }
 
 .check-item:hover {
-  background: rgba(14, 9, 26, 0.75);
-  border-color: rgba(168, 85, 247, 0.2);
+  background: rgba(14, 9, 26, 0.8);
+  border-color: rgba(168, 85, 247, 0.22);
 }
 
 .check-title-cell {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
 }
 
 .check-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  font-size: 11px;
 }
 
 .check-icon.ok {
@@ -241,21 +224,20 @@
 }
 
 .check-name {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-/* Status Pill */
 .state-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
@@ -280,12 +262,12 @@
 .check-detail-cell {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
 .check-detail {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-secondary);
   line-height: 1.4;
 }
@@ -294,7 +276,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #d8b4fe;
   text-decoration: none;
@@ -306,15 +288,15 @@
   text-decoration: underline;
 }
 
-/* OBS Dock & Mobile Collapse (< 768px down to 320px) */
-@media (max-width: 768px) {
-  .hero-status-card {
-    padding: 16px;
-  }
-
+/* Responsive Collapse (< 992px down to 320px) */
+@media (max-width: 992px) {
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+  }
+
+  .check-dashboard {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .check-item {
@@ -324,11 +306,11 @@
 
   .check-detail-cell {
     grid-column: 1 / -1;
-    margin-top: 4px;
+    margin-top: 3px;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 540px) {
   .metrics-grid {
     grid-template-columns: 1fr;
   }

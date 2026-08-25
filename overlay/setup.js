@@ -1,6 +1,6 @@
 /**
  * Spotify Overlay Setup Controller & Services
- * Modern OOP Architecture with Reactive State & Encapsulated API Service
+ * Modern OOP Architecture with Reactive State, Live Chat Simulation & Header Save
  */
 
 /**
@@ -70,19 +70,6 @@ class SettingsStore {
   constructor(onDirtyChange) {
     this.onDirtyChange = onDirtyChange;
     this.isDirty = false;
-    this.state = this._createReactiveState();
-  }
-
-  _createReactiveState() {
-    return new Proxy({}, {
-      set: (target, prop, value) => {
-        if (target[prop] !== value) {
-          target[prop] = value;
-          this.setDirty(true);
-        }
-        return true;
-      }
-    });
   }
 
   setDirty(dirty) {
@@ -142,14 +129,21 @@ class SetupController {
     this.api = new SetupApiClient();
     this.store = new SettingsStore((dirty) => this.renderDirtyState(dirty));
     this.pollTimer = null;
+    this.activeBotName = "OverlayBot";
 
     this.dom = {
       message: document.getElementById("message"),
       saveBtn: document.getElementById("save"),
-      saveIndicator: document.getElementById("save-indicator"),
-      saveStatusText: document.getElementById("save-status-text"),
+      saveBtnText: document.getElementById("save-btn-text"),
+      quickDotTwitch: document.getElementById("quick-dot-twitch"),
+      quickDotSpotify: document.getElementById("quick-dot-spotify"),
       redirectUri: document.getElementById("redirect-uri"),
       copyRedirectBtn: document.getElementById("copy-redirect"),
+
+      // Live Chat Preview
+      previewBotName: document.getElementById("preview-bot-name"),
+      previewBotText: document.getElementById("preview-bot-text"),
+      previewTemplateLabel: document.getElementById("preview-template-label"),
 
       // Twitch
       twitchClientId: document.getElementById("twitch-client-id"),
@@ -219,7 +213,32 @@ class SetupController {
       el.addEventListener("change", () => this.store.setDirty(true));
     });
 
-    // Primary Actions
+    // Message preview listeners
+    const textareas = [
+      { el: this.dom.msgNowPlaying, name: "Now Playing" },
+      { el: this.dom.msgPaused, name: "Paused Track" },
+      { el: this.dom.msgNothingPlaying, name: "Nothing Playing" },
+      { el: this.dom.msgQueued, name: "Queued Track" },
+      { el: this.dom.msgUsage, name: "Command Usage" },
+      { el: this.dom.msgPermissionDenied, name: "Permission Denied" },
+      { el: this.dom.msgCooldown, name: "Cooldown" },
+      { el: this.dom.msgRequestError, name: "Request Error" },
+      { el: this.dom.msgNoMatch, name: "No Match" },
+      { el: this.dom.msgNoDevice, name: "No Device" },
+      { el: this.dom.msgSpotifyNotConnected, name: "Spotify Not Connected" },
+      { el: this.dom.msgSpotifyAuthExpired, name: "Auth Expired" },
+      { el: this.dom.msgSpotifyDenied, name: "Request Denied" },
+      { el: this.dom.msgRateLimited, name: "Rate Limited" },
+      { el: this.dom.msgQuotaExceeded, name: "Quota Exceeded" }
+    ];
+
+    textareas.forEach(({ el, name }) => {
+      if (!el) return;
+      el.addEventListener("focus", () => this.updateLivePreview(el.value, name));
+      el.addEventListener("input", () => this.updateLivePreview(el.value, name));
+    });
+
+    // Actions
     this.dom.saveBtn.addEventListener("click", () => this.handleSave());
     this.dom.twitchConnectBtn.addEventListener("click", () => this.handleTwitchConnect());
     this.dom.twitchDisconnectBtn.addEventListener("click", () => this.handleTwitchDisconnect());
@@ -234,8 +253,8 @@ class SetupController {
         const isPassword = target.type === "password";
         target.type = isPassword ? "text" : "password";
         btn.innerHTML = isPassword
-          ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`
-          : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+          ? `<i class="fa-solid fa-eye-slash"></i>`
+          : `<i class="fa-solid fa-eye"></i>`;
       });
     });
 
@@ -245,18 +264,25 @@ class SetupController {
       if (!uri) return;
       await navigator.clipboard.writeText(uri);
       const originalHTML = this.dom.copyRedirectBtn.innerHTML;
-      this.dom.copyRedirectBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!`;
+      this.dom.copyRedirectBtn.innerHTML = `<i class="fa-solid fa-check"></i> Copied!`;
       setTimeout(() => { this.dom.copyRedirectBtn.innerHTML = originalHTML; }, 2000);
     });
 
-    // Template Tab Switching
+    // Category Tabs
     document.querySelectorAll(".tab-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
         document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
         btn.classList.add("active");
         const panel = document.getElementById(btn.getAttribute("data-tab"));
-        if (panel) panel.classList.add("active");
+        if (panel) {
+          panel.classList.add("active");
+          const firstTextarea = panel.querySelector("textarea");
+          if (firstTextarea) {
+            const label = firstTextarea.previousElementSibling ? firstTextarea.previousElementSibling.textContent : "Message";
+            this.updateLivePreview(firstTextarea.value, label);
+          }
+        }
       });
     });
 
@@ -274,9 +300,31 @@ class SetupController {
           textarea.selectionStart = textarea.selectionEnd = start + token.length;
           textarea.focus();
           this.store.setDirty(true);
+          const label = parentField.querySelector("label") ? parentField.querySelector("label").textContent : "Message";
+          this.updateLivePreview(textarea.value, label);
         }
       });
     });
+  }
+
+  updateLivePreview(rawText, label = "Now Playing") {
+    this.dom.previewTemplateLabel.textContent = label;
+    this.dom.previewBotName.textContent = `${this.activeBotName}:`;
+
+    if (!rawText || !rawText.trim()) {
+      this.dom.previewBotText.innerHTML = `<em>(Message is blank / silenced)</em>`;
+      return;
+    }
+
+    const rendered = rawText
+      .replace(/\{user\}/g, "Alex")
+      .replace(/\{track\}/g, "Starboy")
+      .replace(/\{title\}/g, "Starboy")
+      .replace(/\{artist\}/g, "The Weeknd")
+      .replace(/\{seconds\}/g, "25")
+      .replace(/\{command\}/g, "!sr <song name>");
+
+    this.dom.previewBotText.textContent = rendered;
   }
 
   showMessage(text, isError = false) {
@@ -287,11 +335,11 @@ class SetupController {
 
   renderDirtyState(dirty) {
     if (dirty) {
-      this.dom.saveIndicator.className = "save-status unsaved";
-      this.dom.saveStatusText.textContent = "Unsaved changes";
+      this.dom.saveBtn.className = "header-save-btn unsaved";
+      this.dom.saveBtnText.textContent = "Save Changes *";
     } else {
-      this.dom.saveIndicator.className = "save-status";
-      this.dom.saveStatusText.textContent = "All settings up to date";
+      this.dom.saveBtn.className = "header-save-btn";
+      this.dom.saveBtnText.textContent = "Save Changes";
     }
   }
 
@@ -331,6 +379,8 @@ class SetupController {
     this.dom.msgSpotifyDenied.value = msgs.spotify_denied || "";
     this.dom.msgRateLimited.value = msgs.rate_limited || "";
     this.dom.msgQuotaExceeded.value = msgs.quota_exceeded || "";
+
+    this.updateLivePreview(this.dom.msgNowPlaying.value, "Now Playing");
   }
 
   renderStatus(data, overwriteSettings = false) {
@@ -343,11 +393,14 @@ class SetupController {
     const twitchConnected = data.status?.twitch_connected;
     const twitchStatus = data.status?.twitch_status || "Not connected";
     const twitchUser = data.status?.twitch_user;
+    if (twitchUser) this.activeBotName = twitchUser;
+
     this.setStatusBadge(
       this.dom.twitchStatus,
       twitchConnected ? `Connected as ${twitchUser || "bot"}` : twitchStatus,
       !twitchConnected && twitchStatus.startsWith("error")
     );
+    this.dom.quickDotTwitch.className = `status-dot ${twitchConnected ? "connected" : (twitchStatus.startsWith("error") ? "error" : "")}`;
 
     const spotifyConnected = data.status?.spotify_connected;
     const spotifyStatus = data.status?.spotify_status || "Not connected";
@@ -356,6 +409,7 @@ class SetupController {
       spotifyConnected ? "Connected" : spotifyStatus,
       !spotifyConnected && spotifyStatus.startsWith("error")
     );
+    this.dom.quickDotSpotify.className = `status-dot ${spotifyConnected ? "connected" : (spotifyStatus.startsWith("error") ? "error" : "")}`;
 
     if (data.twitch_device?.state === "pending") {
       this.dom.twitchDevice.textContent = `Authorize at ${data.twitch_device.verification_uri} with code ${data.twitch_device.user_code}.`;
@@ -366,7 +420,7 @@ class SetupController {
     if (data.status?.last_error) {
       this.showMessage(`Connection error: ${data.status.last_error}`, true);
     } else if (data.status?.twitch_status === "disabled") {
-      this.setStatusBadge(this.dom.twitchStatus, "Commands disabled — enable below");
+      this.setStatusBadge(this.dom.twitchStatus, "Commands disabled");
     }
   }
 

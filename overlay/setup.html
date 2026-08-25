@@ -8,361 +8,366 @@
     <link rel="stylesheet" href="/setup.css" />
   </head>
   <body>
-    <!-- Top Navigation Header -->
+    <!-- Pro Console Header -->
     <header>
       <div class="nav-container">
-        <a href="/setup" class="nav-brand">
-          <div class="brand-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polygon points="10 8 16 12 10 16 10 8"></polygon>
-            </svg>
-          </div>
-          <div>
-            <div class="brand-title">Spotify OBS Overlay</div>
-            <div class="brand-subtitle">Local Control Center</div>
-          </div>
-        </a>
-        <nav class="nav-links">
-          <a href="/setup" class="nav-btn active">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            Setup
+        <div class="nav-left">
+          <a href="/setup" class="nav-brand">
+            <div class="brand-icon">
+              <i class="fa-solid fa-compact-disc"></i>
+            </div>
+            <span class="brand-title">Spotify Overlay</span>
           </a>
-          <a href="/check" class="nav-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
-            Health Check
+          <span class="version-tag">v0.3.2</span>
+        </div>
+
+        <nav class="nav-center">
+          <a href="/setup" class="nav-pill active">
+            <i class="fa-solid fa-sliders"></i>
+            <span>Setup</span>
           </a>
-          <a href="/test" target="_blank" class="nav-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            Test Overlay
+          <a href="/check" class="nav-pill">
+            <i class="fa-solid fa-heart-pulse"></i>
+            <span>Diagnostics</span>
+          </a>
+          <a href="/" target="_blank" class="nav-pill">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Live Overlay</span>
           </a>
         </nav>
+
+        <div class="nav-right">
+          <div class="quick-status-indicators">
+            <div class="quick-status-item" title="Twitch Connection Status">
+              <span id="quick-dot-twitch" class="status-dot"></span>
+              <span>Twitch</span>
+            </div>
+            <div class="quick-status-item" title="Spotify Connection Status">
+              <span id="quick-dot-spotify" class="status-dot"></span>
+              <span>Spotify</span>
+            </div>
+          </div>
+          <button id="save" class="header-save-btn">
+            <span class="save-dot"></span>
+            <span id="save-btn-text">Save Changes</span>
+          </button>
+        </div>
       </div>
     </header>
 
     <main>
-      <!-- Hero Banner -->
-      <section class="hero">
-        <div class="hero-text">
-          <h1>Twitch &amp; Spotify Configuration</h1>
-          <p>Local-only control. The OBS overlay displays automatically without requiring external accounts.</p>
-        </div>
-        <div class="hero-badge">
-          <span class="pulse"></span>
-          <span>OBS Ready</span>
-        </div>
-      </section>
-
-      <!-- Global Message / Status Notification -->
+      <!-- Global Notification Banner -->
       <div id="message" role="alert"></div>
 
-      <!-- Account Integrations (2-column grid, responsive collapse) -->
-      <div class="grid-2">
-        <!-- Twitch Bot Section -->
-        <section class="card">
-          <div class="card-header">
-            <div class="card-title-group">
-              <div class="service-icon twitch">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+      <!-- 2-Column Wide Dashboard (Fills the viewport) -->
+      <div class="setup-dashboard">
+        <!-- Left Column: Account Integrations & Triggers -->
+        <div class="setup-col-left">
+          <!-- Twitch Bot Card -->
+          <section class="card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <div class="service-icon twitch">
+                  <i class="fa-brands fa-twitch"></i>
+                </div>
+                <h2 class="card-title">Twitch Bot</h2>
               </div>
-              <h2 class="card-title">Twitch Bot</h2>
+              <span id="twitch-status" class="status-badge">Not connected</span>
             </div>
-            <span id="twitch-status" class="status-badge">Not connected</span>
-          </div>
 
-          <div class="field">
-            <label for="twitch-client-id">Twitch Client ID</label>
-            <div class="input-wrapper">
-              <input id="twitch-client-id" type="password" placeholder="Twitch Application Client ID" autocomplete="off" spellcheck="false" />
-              <button type="button" class="field-btn" data-toggle="twitch-client-id" title="Toggle visibility">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="twitch-channel">Target Streamer Channel</label>
-            <input id="twitch-channel" type="text" placeholder="channel_name (without @)" autocomplete="off" spellcheck="false" />
-          </div>
-
-          <div class="btn-group">
-            <button id="twitch-connect" class="btn-primary">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-              Authorize Bot
-            </button>
-            <button id="twitch-disconnect" class="btn-secondary">Disconnect</button>
-          </div>
-
-          <p id="twitch-device"></p>
-          <div class="helper-text">Create a Twitch application with Device Code flow enabled. Make the bot account a moderator in the target channel.</div>
-        </section>
-
-        <!-- Spotify Integration Section -->
-        <section class="card">
-          <div class="card-header">
-            <div class="card-title-group">
-              <div class="service-icon spotify">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+            <div class="field">
+              <label for="twitch-client-id">Twitch Client ID</label>
+              <div class="input-wrapper">
+                <input id="twitch-client-id" type="password" placeholder="Application Client ID" autocomplete="off" spellcheck="false" />
+                <button type="button" class="field-btn" data-toggle="twitch-client-id" title="Toggle visibility">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
               </div>
-              <h2 class="card-title">Spotify</h2>
             </div>
-            <span id="spotify-status" class="status-badge">Not connected</span>
-          </div>
 
-          <div class="field">
-            <label for="spotify-client-id">Spotify Client ID</label>
-            <div class="input-wrapper">
-              <input id="spotify-client-id" type="password" placeholder="Spotify Application Client ID" autocomplete="off" spellcheck="false" />
-              <button type="button" class="field-btn" data-toggle="spotify-client-id" title="Toggle visibility">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <div class="field">
+              <label for="twitch-channel">Target Streamer Channel</label>
+              <input id="twitch-channel" type="text" placeholder="channel_name (no @)" autocomplete="off" spellcheck="false" />
+            </div>
+
+            <div class="btn-group">
+              <button id="twitch-connect" class="btn-primary">
+                <i class="fa-solid fa-bolt"></i>
+                Authorize Bot
+              </button>
+              <button id="twitch-disconnect" class="btn-secondary">Disconnect</button>
+            </div>
+
+            <p id="twitch-device"></p>
+            <div class="helper-text">Create a Twitch application with Device Code flow. Make the bot a moderator in your channel.</div>
+          </section>
+
+          <!-- Spotify Integration Card -->
+          <section class="card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <div class="service-icon spotify">
+                  <i class="fa-brands fa-spotify"></i>
+                </div>
+                <h2 class="card-title">Spotify</h2>
+              </div>
+              <span id="spotify-status" class="status-badge">Not connected</span>
+            </div>
+
+            <div class="field">
+              <label for="spotify-client-id">Spotify Client ID</label>
+              <div class="input-wrapper">
+                <input id="spotify-client-id" type="password" placeholder="Application Client ID" autocomplete="off" spellcheck="false" />
+                <button type="button" class="field-btn" data-toggle="spotify-client-id" title="Toggle visibility">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Spotify Redirect URI</label>
+              <div class="copy-box">
+                <code id="redirect-uri"></code>
+                <button type="button" id="copy-redirect" class="copy-btn">
+                  <i class="fa-solid fa-copy"></i>
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            <div class="btn-group">
+              <button id="spotify-connect" class="btn-primary">
+                <i class="fa-solid fa-bolt"></i>
+                Authorize Spotify
+              </button>
+              <button id="spotify-disconnect" class="btn-secondary">Disconnect</button>
+            </div>
+
+            <div class="helper-text">Add the Redirect URI above to your Spotify Developer Dashboard under App Settings.</div>
+          </section>
+
+          <!-- Commands & Cooldowns Card -->
+          <section class="card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <div class="service-icon chat">
+                  <i class="fa-solid fa-gear"></i>
+                </div>
+                <h2 class="card-title">Commands &amp; Permissions</h2>
+              </div>
+            </div>
+
+            <div class="switches-grid">
+              <div class="switch-row">
+                <label for="chat-enabled" class="switch-label">
+                  <span class="switch-title">Chat Commands</span>
+                  <span class="switch-desc">Respond to viewer commands</span>
+                </label>
+                <label class="switch">
+                  <input id="chat-enabled" type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="switch-row">
+                <label for="requests-enabled" class="switch-label">
+                  <span class="switch-title">Song Requests</span>
+                  <span class="switch-desc">Queue to Spotify</span>
+                </label>
+                <label class="switch">
+                  <input id="requests-enabled" type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <label for="current-song-commands">Now-Playing Aliases</label>
+                <input id="current-song-commands" type="text" placeholder="!song, !np, !music" />
+              </div>
+              <div class="field">
+                <label for="request-commands">Request Aliases</label>
+                <input id="request-commands" type="text" placeholder="!sr, !request" />
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <label for="request-role">Minimum Request Role</label>
+                <select id="request-role">
+                  <option value="everyone">Everyone</option>
+                  <option value="subscriber">Subscriber &amp; Above</option>
+                  <option value="vip">VIP &amp; Above</option>
+                  <option value="moderator">Moderator &amp; Above</option>
+                  <option value="broadcaster">Broadcaster Only</option>
+                </select>
+              </div>
+
+              <div class="grid-2">
+                <div class="field">
+                  <label for="user-cooldown">User (s)</label>
+                  <input id="user-cooldown" type="number" min="0" max="86400" />
+                </div>
+                <div class="field">
+                  <label for="global-cooldown">Global (s)</label>
+                  <input id="global-cooldown" type="number" min="0" max="86400" />
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right Column: Message Response Templates & Live Twitch Chat Preview -->
+        <div class="setup-col-right">
+          <section class="card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <div class="service-icon chat">
+                  <i class="fa-solid fa-comments"></i>
+                </div>
+                <h2 class="card-title">Bot Response Messages</h2>
+              </div>
+              <div class="helper-text" style="font-size: 11px;">Blank = silenced</div>
+            </div>
+
+            <!-- Category Tabs -->
+            <div class="tab-bar">
+              <button type="button" class="tab-btn active" data-tab="tab-playback">
+                <i class="fa-solid fa-music"></i>
+                Playback
+              </button>
+              <button type="button" class="tab-btn" data-tab="tab-queue">
+                <i class="fa-solid fa-list-ul"></i>
+                Queue &amp; Requests
+              </button>
+              <button type="button" class="tab-btn" data-tab="tab-permissions">
+                <i class="fa-solid fa-shield-halved"></i>
+                Permissions
+              </button>
+              <button type="button" class="tab-btn" data-tab="tab-system">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Errors &amp; System
               </button>
             </div>
-          </div>
 
-          <div class="field">
-            <label>Spotify Redirect URI</label>
-            <div class="copy-box">
-              <code id="redirect-uri"></code>
-              <button type="button" id="copy-redirect" class="copy-btn">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                Copy URI
-              </button>
+            <!-- Tab 1: Playback Status -->
+            <div id="tab-playback" class="tab-panel active">
+              <div class="field">
+                <label for="message-now-playing">Now Playing Response</label>
+                <textarea id="message-now-playing" rows="2"></textarea>
+                <div class="tag-pills">
+                  <span class="tag-pill" data-insert="{track}">+{track}</span>
+                  <span class="tag-pill" data-insert="{artist}">+{artist}</span>
+                  <span class="tag-pill" data-insert="{user}">+{user}</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="message-paused">Paused Track Response</label>
+                <textarea id="message-paused" rows="2"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="message-nothing-playing">Nothing Playing Response</label>
+                <textarea id="message-nothing-playing" rows="2"></textarea>
+              </div>
+            </div>
+
+            <!-- Tab 2: Queue & Requests -->
+            <div id="tab-queue" class="tab-panel">
+              <div class="field">
+                <label for="message-queued">Song Queued Successfully</label>
+                <textarea id="message-queued" rows="2"></textarea>
+                <div class="tag-pills">
+                  <span class="tag-pill" data-insert="{track}">+{track}</span>
+                  <span class="tag-pill" data-insert="{user}">+{user}</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="message-usage">Command Usage Helper</label>
+                <textarea id="message-usage" rows="2"></textarea>
+                <div class="tag-pills">
+                  <span class="tag-pill" data-insert="{command}">+{command}</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="message-no-match">No Matching Track Found</label>
+                <textarea id="message-no-match" rows="2"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="message-request-error">Generic Request Error</label>
+                <textarea id="message-request-error" rows="2"></textarea>
+              </div>
+            </div>
+
+            <!-- Tab 3: Permissions & Limits -->
+            <div id="tab-permissions" class="tab-panel">
+              <div class="field">
+                <label for="message-permission-denied">Permission Denied (Role)</label>
+                <textarea id="message-permission-denied" rows="2"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="message-cooldown">Cooldown Active</label>
+                <textarea id="message-cooldown" rows="2"></textarea>
+                <div class="tag-pills">
+                  <span class="tag-pill" data-insert="{seconds}">+{seconds}</span>
+                  <span class="tag-pill" data-insert="{user}">+{user}</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="message-rate-limited">Rate Limit Exceeded</label>
+                <textarea id="message-rate-limited" rows="2"></textarea>
+              </div>
+            </div>
+
+            <!-- Tab 4: System & Spotify Errors -->
+            <div id="tab-system" class="tab-panel">
+              <div class="field">
+                <label for="message-no-device">No Active Spotify Playback Device</label>
+                <textarea id="message-no-device" rows="2"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="message-spotify-not-connected">Spotify Not Connected</label>
+                <textarea id="message-spotify-not-connected" rows="2"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="message-spotify-auth-expired">Spotify Authorization Expired</label>
+                <textarea id="message-spotify-auth-expired" rows="2"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="message-spotify-denied">Spotify Request Denied</label>
+                <textarea id="message-spotify-denied" rows="2"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="message-quota-exceeded">Spotify API Quota Exhausted</label>
+                <textarea id="message-quota-exceeded" rows="2"></textarea>
+              </div>
+            </div>
+          </section>
+
+          <!-- Interactive Live Twitch Chat Preview Simulation -->
+          <div class="chat-preview-card">
+            <div class="chat-preview-header">
+              <span><i class="fa-brands fa-twitch"></i> Live Twitch Chat Output Simulation</span>
+              <span id="preview-template-label">Now Playing</span>
+            </div>
+            <div class="chat-message-bubble">
+              <span class="chat-bot-badge">BOT</span>
+              <span id="preview-bot-name" class="chat-bot-user">OverlayBot:</span>
+              <span id="preview-bot-text" class="chat-message-text">Now playing: Starboy by The Weeknd (requested by Alex)</span>
             </div>
           </div>
-
-          <div class="btn-group">
-            <button id="spotify-connect" class="btn-primary">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-              Authorize Spotify
-            </button>
-            <button id="spotify-disconnect" class="btn-secondary">Disconnect</button>
-          </div>
-
-          <div class="helper-text">Add the Redirect URI above to your Spotify Developer Dashboard under App Settings.</div>
-        </section>
-      </div>
-
-      <!-- Commands & Permissions Engine -->
-      <section class="card">
-        <div class="card-header">
-          <div class="card-title-group">
-            <div class="service-icon chat">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            </div>
-            <h2 class="card-title">Commands &amp; Song Requests</h2>
-          </div>
         </div>
-
-        <div class="grid-2">
-          <div class="switch-row">
-            <label for="chat-enabled" class="switch-label">
-              <span class="switch-title">Twitch Chat Commands</span>
-              <span class="switch-desc">Respond to viewer commands in chat</span>
-            </label>
-            <label class="switch">
-              <input id="chat-enabled" type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <div class="switch-row">
-            <label for="requests-enabled" class="switch-label">
-              <span class="switch-title">Song Request Queue</span>
-              <span class="switch-desc">Allow viewers to queue songs to Spotify</span>
-            </label>
-            <label class="switch">
-              <input id="requests-enabled" type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-
-        <div class="grid-2">
-          <div class="field">
-            <label for="current-song-commands">Current-Song Aliases (comma separated)</label>
-            <input id="current-song-commands" type="text" placeholder="!song, !np, !music, !track" />
-          </div>
-
-          <div class="field">
-            <label for="request-commands">Song-Request Aliases (comma separated)</label>
-            <input id="request-commands" type="text" placeholder="!sr, !request, !songrequest" />
-          </div>
-        </div>
-
-        <div class="grid-2">
-          <div class="field">
-            <label for="request-role">Minimum Role Required for Requests</label>
-            <select id="request-role">
-              <option value="everyone">Everyone (All Viewers)</option>
-              <option value="subscriber">Subscriber &amp; Above</option>
-              <option value="vip">VIP &amp; Above</option>
-              <option value="moderator">Moderator &amp; Above</option>
-              <option value="broadcaster">Broadcaster Only</option>
-            </select>
-          </div>
-
-          <div class="grid-2" style="gap: 10px;">
-            <div class="field">
-              <label for="user-cooldown">Per-User Cooldown (s)</label>
-              <input id="user-cooldown" type="number" min="0" max="86400" />
-            </div>
-            <div class="field">
-              <label for="global-cooldown">Global Cooldown (s)</label>
-              <input id="global-cooldown" type="number" min="0" max="86400" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Message Templates Manager -->
-      <section class="card template-section">
-        <div class="card-header">
-          <div class="card-title-group">
-            <div class="service-icon chat">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7m0 0V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6.5L4 21z"></path></svg>
-            </div>
-            <h2 class="card-title">Bot Chat Responses &amp; Messages</h2>
-          </div>
-        </div>
-
-        <div class="helper-text">
-          Placeholders available: <code>{user}</code>, <code>{track}</code>, <code>{title}</code>, <code>{artist}</code>, <code>{seconds}</code>, <code>{command}</code>. Leave any message blank to silence it.
-        </div>
-
-        <!-- Category Tabs -->
-        <div class="tab-bar">
-          <button type="button" class="tab-btn active" data-tab="tab-playback">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-            Playback Status
-          </button>
-          <button type="button" class="tab-btn" data-tab="tab-queue">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-            Queue &amp; Requests
-          </button>
-          <button type="button" class="tab-btn" data-tab="tab-permissions">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            Permissions &amp; Limits
-          </button>
-          <button type="button" class="tab-btn" data-tab="tab-system">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            System &amp; Errors
-          </button>
-        </div>
-
-        <!-- Tab 1: Playback Status -->
-        <div id="tab-playback" class="tab-panel active">
-          <div class="field">
-            <label for="message-now-playing">Now Playing Response</label>
-            <textarea id="message-now-playing" rows="2"></textarea>
-            <div class="tag-pills">
-              <span class="tag-pill" data-insert="{track}">+{track}</span>
-              <span class="tag-pill" data-insert="{artist}">+{artist}</span>
-              <span class="tag-pill" data-insert="{user}">+{user}</span>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="message-paused">Paused Track Response</label>
-            <textarea id="message-paused" rows="2"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="message-nothing-playing">Nothing Playing Response</label>
-            <textarea id="message-nothing-playing" rows="2"></textarea>
-          </div>
-        </div>
-
-        <!-- Tab 2: Queue & Requests -->
-        <div id="tab-queue" class="tab-panel">
-          <div class="field">
-            <label for="message-queued">Song Queued Successfully</label>
-            <textarea id="message-queued" rows="2"></textarea>
-            <div class="tag-pills">
-              <span class="tag-pill" data-insert="{track}">+{track}</span>
-              <span class="tag-pill" data-insert="{user}">+{user}</span>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="message-usage">Command Usage Helper</label>
-            <textarea id="message-usage" rows="2"></textarea>
-            <div class="tag-pills">
-              <span class="tag-pill" data-insert="{command}">+{command}</span>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="message-no-match">No Matching Track Found</label>
-            <textarea id="message-no-match" rows="2"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="message-request-error">Generic Request Error</label>
-            <textarea id="message-request-error" rows="2"></textarea>
-          </div>
-        </div>
-
-        <!-- Tab 3: Permissions & Limits -->
-        <div id="tab-permissions" class="tab-panel">
-          <div class="field">
-            <label for="message-permission-denied">Permission Denied (Role)</label>
-            <textarea id="message-permission-denied" rows="2"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="message-cooldown">Cooldown Active</label>
-            <textarea id="message-cooldown" rows="2"></textarea>
-            <div class="tag-pills">
-              <span class="tag-pill" data-insert="{seconds}">+{seconds}</span>
-              <span class="tag-pill" data-insert="{user}">+{user}</span>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="message-rate-limited">Rate Limit Exceeded</label>
-            <textarea id="message-rate-limited" rows="2"></textarea>
-          </div>
-        </div>
-
-        <!-- Tab 4: System & Spotify Errors -->
-        <div id="tab-system" class="tab-panel">
-          <div class="field">
-            <label for="message-no-device">No Active Spotify Playback Device</label>
-            <textarea id="message-no-device" rows="2"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="message-spotify-not-connected">Spotify Not Connected</label>
-            <textarea id="message-spotify-not-connected" rows="2"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="message-spotify-auth-expired">Spotify Authorization Expired</label>
-            <textarea id="message-spotify-auth-expired" rows="2"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="message-spotify-denied">Spotify Request Denied</label>
-            <textarea id="message-spotify-denied" rows="2"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="message-quota-exceeded">Spotify API Quota Exhausted</label>
-            <textarea id="message-quota-exceeded" rows="2"></textarea>
-          </div>
-        </div>
-      </section>
-
-      <!-- Sticky Save Bar -->
-      <div class="save-bar">
-        <div id="save-indicator" class="save-status">
-          <span class="dot"></span>
-          <span id="save-status-text">All settings up to date</span>
-        </div>
-        <button id="save" class="btn-primary">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-          Save Settings
-        </button>
       </div>
     </main>
 

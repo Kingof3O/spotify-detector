@@ -8,65 +8,50 @@
     <link rel="stylesheet" href="/check.css" />
   </head>
   <body>
-    <!-- Top Navigation Header -->
+    <!-- Pro Console Header -->
     <header>
       <div class="nav-container">
-        <a href="/check" class="nav-brand">
-          <div class="brand-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polygon points="10 8 16 12 10 16 10 8"></polygon>
-            </svg>
-          </div>
-          <div>
-            <div class="brand-title">Spotify OBS Overlay</div>
-            <div class="brand-subtitle">Diagnostics &amp; Health</div>
-          </div>
-        </a>
-        <nav class="nav-links">
-          <a href="/setup" class="nav-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            Setup
+        <div class="nav-left">
+          <a href="/check" class="nav-brand">
+            <div class="brand-icon">
+              <i class="fa-solid fa-compact-disc"></i>
+            </div>
+            <span class="brand-title">Spotify Overlay</span>
           </a>
-          <a href="/check" class="nav-btn active">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
-            Health Check
+          <span class="version-tag">v0.3.2</span>
+        </div>
+
+        <nav class="nav-center">
+          <a href="/setup" class="nav-pill">
+            <i class="fa-solid fa-sliders"></i>
+            <span>Setup</span>
           </a>
-          <a href="/test" target="_blank" class="nav-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            Test Overlay
+          <a href="/check" class="nav-pill active">
+            <i class="fa-solid fa-heart-pulse"></i>
+            <span>Diagnostics</span>
+          </a>
+          <a href="/" target="_blank" class="nav-pill">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Live Overlay</span>
           </a>
         </nav>
+
+        <div class="nav-right">
+          <button id="refresh" class="header-save-btn">
+            <i id="refresh-icon" class="fa-solid fa-rotate"></i>
+            <span>Run Live Check</span>
+          </button>
+        </div>
       </div>
     </header>
 
     <main>
-      <!-- Hero Status Header -->
-      <section class="hero-status-card">
-        <div class="hero-status-left">
-          <div id="hero-pulse" class="status-pulse-ring ok">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
-          </div>
-          <div class="hero-status-content">
-            <h1 id="hero-title">System Status</h1>
-            <p id="summary">Running live diagnostics…</p>
-          </div>
-        </div>
-        <div class="hero-actions">
-          <button id="refresh" class="btn-primary">
-            <svg id="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-            Refresh Checks
-          </button>
-          <a href="/setup" class="btn-secondary">Open Setup</a>
-        </div>
-      </section>
-
-      <!-- Quick Metrics Grid -->
+      <!-- Quick Metrics Grid (Full width across top) -->
       <div class="metrics-grid">
         <div class="metric-card">
           <div class="metric-top">
             <div class="metric-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+              <i class="fa-solid fa-server"></i>
             </div>
             <span id="metric-dot-server" class="metric-dot ok"></span>
           </div>
@@ -77,7 +62,7 @@
         <div class="metric-card">
           <div class="metric-top">
             <div class="metric-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+              <i class="fa-solid fa-music"></i>
             </div>
             <span id="metric-dot-media" class="metric-dot ok"></span>
           </div>
@@ -88,7 +73,7 @@
         <div class="metric-card">
           <div class="metric-top">
             <div class="metric-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+              <i class="fa-brands fa-twitch"></i>
             </div>
             <span id="metric-dot-twitch" class="metric-dot ok"></span>
           </div>
@@ -99,7 +84,7 @@
         <div class="metric-card">
           <div class="metric-top">
             <div class="metric-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+              <i class="fa-brands fa-spotify"></i>
             </div>
             <span id="metric-dot-spotify" class="metric-dot ok"></span>
           </div>
@@ -108,16 +93,50 @@
         </div>
       </div>
 
-      <!-- Diagnostic Checklist -->
-      <section class="section-card">
-        <div class="section-header">
-          <div class="section-title-group">
-            <h2 class="section-title">Diagnostic Checklist</h2>
-          </div>
-          <span id="updated">Checking…</span>
+      <!-- 2-Column Diagnostics Dashboard -->
+      <div class="check-dashboard">
+        <!-- Left: Status Overview & Controls -->
+        <div class="check-col-left">
+          <section class="status-overview-card">
+            <div class="status-hero-pulse">
+              <div id="hero-pulse" class="status-pulse-ring ok">
+                <i class="fa-solid fa-heart-pulse"></i>
+              </div>
+              <div class="status-hero-text">
+                <h1 id="hero-title">System Status</h1>
+                <p id="summary">Running live diagnostics…</p>
+              </div>
+            </div>
+
+            <div class="status-actions">
+              <span id="updated">Checking…</span>
+              <a href="/setup" class="btn-secondary" style="justify-content: center; padding: 9px 14px;">
+                <i class="fa-solid fa-sliders"></i>
+                Open Setup Dashboard
+              </a>
+              <a href="/" target="_blank" class="btn-secondary" style="justify-content: center; padding: 9px 14px;">
+                <i class="fa-solid fa-layer-group"></i>
+                Open Live OBS Overlay
+              </a>
+            </div>
+          </section>
         </div>
-        <div id="checks"></div>
-      </section>
+
+        <!-- Right: Diagnostic Checklist Cards Stack -->
+        <div class="check-col-right">
+          <section class="card" style="padding: 16px 18px;">
+            <div class="card-header">
+              <div class="card-title-group">
+                <div class="service-icon chat">
+                  <i class="fa-solid fa-list-check"></i>
+                </div>
+                <h2 class="card-title">Detailed Diagnostic Checks</h2>
+              </div>
+            </div>
+            <div id="checks"></div>
+          </section>
+        </div>
+      </div>
     </main>
 
     <script src="/check.js"></script>
