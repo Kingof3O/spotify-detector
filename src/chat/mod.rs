@@ -280,6 +280,17 @@ async fn run_socket(
                             EventResult::Error(error) => return SocketResult::Stopped(Some(error)),
                         }
                     }
+                    Some(Ok(Message::Binary(bytes))) => {
+                        if let Ok(text) = String::from_utf8(bytes.to_vec()) {
+                            match handle_event(state, config, twitch, spotify, cooldowns.clone(), token, client_id, broadcaster_id, &mut seen, &text).await {
+                                EventResult::Continue => {},
+                                EventResult::Reconnect(url) => return SocketResult::Reconnect(url),
+                                EventResult::Error(error) => return SocketResult::Stopped(Some(error)),
+                            }
+                        } else {
+                            tracing::debug!("ignored non-UTF-8 Twitch EventSub binary frame");
+                        }
+                    }
                     Some(Ok(Message::Ping(payload))) => {
                         if socket.send(Message::Pong(payload)).await.is_err() {
                             return SocketResult::Stopped(Some("Twitch EventSub ping failed".to_owned()));
@@ -288,7 +299,7 @@ async fn run_socket(
                     Some(Ok(Message::Close(_))) | None => {
                         return SocketResult::Stopped(Some("Twitch EventSub disconnected".to_owned()));
                     }
-                    Some(Ok(Message::Binary(_))) | Some(Ok(Message::Pong(_))) | Some(Ok(Message::Frame(_))) => {}
+                    Some(Ok(Message::Pong(_))) | Some(Ok(Message::Frame(_))) => {}
                     Some(Err(error)) => return SocketResult::Stopped(Some(format!("Twitch EventSub read: {error}"))),
                 }
             }
