@@ -5,16 +5,16 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --bg: #08060d;
   --bg-elevated: #11091e;
-  --card-bg: rgba(20, 12, 34, 0.72);
+  --card-bg: rgba(20, 12, 34, 0.76);
   --card-border: rgba(168, 85, 247, 0.16);
-  --card-glow: 0 12px 32px -8px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(168, 85, 247, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --card-glow: 0 8px 24px -6px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(168, 85, 247, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --text-primary: #fdfcff;
   --text-secondary: #ddd4ec;
   --text-muted: #a59bb8;
   --accent: #a855f7;
   --accent-hover: #b975f9;
   --accent-gradient: linear-gradient(135deg, #a855f7, #7e22ce);
-  --accent-glow: 0 4px 20px rgba(168, 85, 247, 0.35);
+  --accent-glow: 0 4px 16px rgba(168, 85, 247, 0.35);
   --success: #10b981;
   --success-bg: rgba(16, 185, 129, 0.14);
   --success-border: rgba(16, 185, 129, 0.3);
@@ -24,7 +24,7 @@
   --error: #f43f5e;
   --error-bg: rgba(244, 63, 94, 0.14);
   --error-border: rgba(244, 63, 94, 0.3);
-  --input-bg: rgba(9, 6, 18, 0.75);
+  --input-bg: rgba(9, 6, 18, 0.8);
   --input-border: rgba(168, 85, 247, 0.2);
   --input-focus: rgba(192, 132, 252, 0.85);
 }
@@ -39,13 +39,13 @@ body {
   min-height: 100vh;
   background-color: var(--bg);
   background-image:
-    radial-gradient(1200px 700px at 0% -10%, rgba(139, 92, 246, 0.18), transparent 70%),
-    radial-gradient(1000px 600px at 100% 10%, rgba(217, 70, 239, 0.12), transparent 65%),
-    radial-gradient(1100px 700px at 50% 110%, rgba(88, 28, 135, 0.2), transparent 75%);
+    radial-gradient(1200px 600px at 0% -10%, rgba(139, 92, 246, 0.16), transparent 70%),
+    radial-gradient(1000px 500px at 100% 10%, rgba(217, 70, 239, 0.1), transparent 65%),
+    radial-gradient(1100px 600px at 50% 110%, rgba(88, 28, 135, 0.18), transparent 75%);
   background-attachment: fixed;
   color: var(--text-primary);
-  line-height: 1.5;
-  padding-bottom: 30px;
+  line-height: 1.45;
+  padding-bottom: 20px;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -56,7 +56,7 @@ header {
   z-index: 50;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  background: rgba(8, 6, 13, 0.86);
+  background: rgba(8, 6, 13, 0.9);
   border-bottom: 1px solid var(--card-border);
 }
 
@@ -67,19 +67,19 @@ header {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 10px 0;
+  padding: 9px 0;
 }
 
 .nav-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   text-decoration: none;
   color: var(--text-primary);
 }
@@ -87,13 +87,13 @@ header {
 .brand-icon {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   background: var(--accent-gradient);
-  box-shadow: 0 2px 10px rgba(168, 85, 247, 0.35);
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.35);
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .brand-title {
@@ -102,34 +102,24 @@ header {
   letter-spacing: -0.01em;
 }
 
-.version-tag {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: rgba(168, 85, 247, 0.12);
-  color: #d8b4fe;
-  border: 1px solid rgba(168, 85, 247, 0.22);
-}
-
 /* Center Segmented Navigation Pills */
 .nav-center {
   display: flex;
   align-items: center;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 3px;
+  border-radius: 9px;
+  padding: 2px;
   gap: 2px;
 }
 
 .nav-pill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 12.5px;
+  gap: 6px;
+  padding: 5px 13px;
+  border-radius: 7px;
+  font-size: 12px;
   font-weight: 600;
   text-decoration: none;
   color: var(--text-secondary);
@@ -147,7 +137,7 @@ header {
   border: 1px solid rgba(168, 85, 247, 0.35);
 }
 
-/* Header Right Actions & Quick Status */
+/* Header Right Actions & Status Dots */
 .nav-right {
   display: flex;
   align-items: center;
@@ -164,7 +154,7 @@ header {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
 }
 
@@ -177,31 +167,31 @@ header {
 
 .status-dot.connected {
   background: var(--success);
-  box-shadow: 0 0 8px var(--success);
+  box-shadow: 0 0 7px var(--success);
 }
 
 .status-dot.error {
   background: var(--error);
-  box-shadow: 0 0 8px var(--error);
+  box-shadow: 0 0 7px var(--error);
 }
 
-/* Main Dashboard Container */
+/* Main Container (Full width, zero deadspace) */
 main {
   width: min(1440px, calc(100% - 32px));
-  margin: 18px auto 0;
+  margin: 14px auto 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 /* Notification Banner */
 #message {
   display: none;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 9px;
+  font-size: 12.5px;
   font-weight: 600;
-  animation: slideDown 0.18s ease-out;
+  animation: slideDown 0.15s ease-out;
 }
 
 #message.visible {
@@ -225,8 +215,8 @@ main {
 
 /* High-Density Card Component */
 .card {
-  padding: 18px 20px;
-  border-radius: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--card-glow);
@@ -234,31 +224,31 @@ main {
   -webkit-backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding-bottom: 10px;
+  gap: 8px;
+  padding-bottom: 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .card-title-group {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
 }
 
 .service-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .service-icon.twitch {
@@ -280,7 +270,7 @@ main {
 }
 
 .card-title {
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -290,9 +280,9 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 9px;
+  padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
   background: rgba(255, 255, 255, 0.06);
@@ -318,10 +308,10 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 8px 14px;
-  border-radius: 9px;
-  font-size: 12.5px;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
@@ -332,7 +322,7 @@ button {
 .btn-primary {
   background: var(--accent-gradient);
   color: #fff;
-  box-shadow: 0 2px 12px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 2px 10px rgba(168, 85, 247, 0.3);
 }
 
 .btn-primary:hover {
@@ -354,7 +344,7 @@ button {
 
 .btn-group {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
@@ -362,10 +352,10 @@ button {
 .header-save-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 14px;
-  border-radius: 8px;
-  font-size: 12.5px;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 7px;
+  font-size: 12px;
   font-weight: 700;
   background: var(--accent-gradient);
   color: #fff;
@@ -388,20 +378,20 @@ button {
 
 .header-save-btn.unsaved {
   background: linear-gradient(135deg, #d946ef, #9333ea);
-  box-shadow: 0 0 14px rgba(217, 70, 239, 0.5);
+  box-shadow: 0 0 12px rgba(217, 70, 239, 0.5);
 }
 
 .header-save-btn.unsaved .save-dot {
   background: #fde047;
-  box-shadow: 0 0 8px #fde047;
+  box-shadow: 0 0 7px #fde047;
 }
 
-/* Responsive Collapse for OBS Docks & Mobile */
+/* Responsive Collapse for OBS Browser Docks */
 @media (max-width: 960px) {
   .nav-container {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 8px;
   }
 
   .nav-left, .nav-center, .nav-right {

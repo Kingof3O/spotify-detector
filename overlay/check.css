@@ -2,19 +2,19 @@
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  gap: 10px;
 }
 
 .metric-card {
-  padding: 14px 16px;
-  border-radius: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--card-glow);
   backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .metric-top {
@@ -24,29 +24,29 @@
 }
 
 .metric-icon {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 6px;
   display: grid;
   place-items: center;
   background: rgba(168, 85, 247, 0.14);
   color: #d8b4fe;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .metric-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--text-muted);
 }
 
-.metric-dot.ok { background: var(--success); box-shadow: 0 0 8px var(--success); }
-.metric-dot.warning { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
-.metric-dot.error { background: var(--error); box-shadow: 0 0 8px var(--error); }
+.metric-dot.ok { background: var(--success); box-shadow: 0 0 7px var(--success); }
+.metric-dot.warning { background: var(--warning); box-shadow: 0 0 7px var(--warning); }
+.metric-dot.error { background: var(--error); box-shadow: 0 0 7px var(--error); }
 
 .metric-label {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -54,7 +54,7 @@
 }
 
 .metric-value {
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
@@ -65,49 +65,49 @@
 /* 2-Column Diagnostics Layout */
 .check-dashboard {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 12px;
   align-items: start;
 }
 
 .check-col-left {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .check-col-right {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 /* Status Overview Card */
 .status-overview-card {
-  padding: 20px;
-  border-radius: 16px;
+  padding: 16px;
+  border-radius: 14px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--card-glow);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .status-hero-pulse {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .status-pulse-ring {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  font-size: 18px;
+  font-size: 16px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.25s ease;
@@ -132,23 +132,23 @@
 }
 
 .status-hero-text h1 {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: -0.01em;
   color: var(--text-primary);
 }
 
 #summary {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--text-muted);
-  margin-top: 2px;
-  line-height: 1.4;
+  margin-top: 1px;
+  line-height: 1.35;
 }
 
 .status-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .spin {
@@ -161,7 +161,7 @@
 }
 
 #updated {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
@@ -169,16 +169,16 @@
 #checks {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .check-item {
   display: grid;
-  grid-template-columns: 200px 85px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 190px 75px minmax(0, 1fr);
+  gap: 10px;
   align-items: center;
-  padding: 12px 14px;
-  border-radius: 11px;
+  padding: 8px 12px;
+  border-radius: 9px;
   background: rgba(10, 6, 20, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.05);
   transition: all 0.15s ease;
@@ -192,17 +192,17 @@
 .check-title-cell {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
 }
 
 .check-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .check-icon.ok {
@@ -224,7 +224,7 @@
 }
 
 .check-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -233,11 +233,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -262,21 +262,21 @@
 .check-detail-cell {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 
 .check-detail {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--text-secondary);
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .check-action-link {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   color: #d8b4fe;
   text-decoration: none;
@@ -288,29 +288,29 @@
   text-decoration: underline;
 }
 
-/* Responsive Collapse (< 992px down to 320px) */
-@media (max-width: 992px) {
+/* Responsive Collapse (< 860px) */
+@media (max-width: 860px) {
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
   .check-dashboard {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 10px;
   }
 
   .check-item {
     grid-template-columns: 1fr auto;
-    gap: 8px;
+    gap: 6px;
   }
 
   .check-detail-cell {
     grid-column: 1 / -1;
-    margin-top: 3px;
+    margin-top: 2px;
   }
 }
 
-@media (max-width: 540px) {
+@media (max-width: 500px) {
   .metrics-grid {
     grid-template-columns: 1fr;
   }

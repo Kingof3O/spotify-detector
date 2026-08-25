@@ -1,6 +1,6 @@
 /**
  * Spotify Overlay Setup Controller & Services
- * Modern OOP Architecture with Reactive State, Live Chat Simulation & Header Save
+ * Ultra-Compact OOP Architecture with Single-Input Message Manager & Live Chat Simulation
  */
 
 /**
@@ -86,7 +86,7 @@ class SettingsStore {
       .filter(Boolean);
   }
 
-  toPayload(dom) {
+  toPayload(dom, messages) {
     return {
       twitch_client_id: dom.twitchClientId.value.trim(),
       twitch_channel: dom.twitchChannel.value.trim(),
@@ -100,21 +100,21 @@ class SettingsStore {
         request_user_cooldown_secs: Number(dom.userCooldown.value),
         request_global_cooldown_secs: Number(dom.globalCooldown.value),
         messages: {
-          now_playing: dom.msgNowPlaying.value,
-          paused: dom.msgPaused.value,
-          nothing_playing: dom.msgNothingPlaying.value,
-          queued: dom.msgQueued.value,
-          usage: dom.msgUsage.value,
-          permission_denied: dom.msgPermissionDenied.value,
-          cooldown: dom.msgCooldown.value,
-          request_error: dom.msgRequestError.value,
-          no_match: dom.msgNoMatch.value,
-          no_device: dom.msgNoDevice.value,
-          spotify_not_connected: dom.msgSpotifyNotConnected.value,
-          spotify_auth_expired: dom.msgSpotifyAuthExpired.value,
-          spotify_denied: dom.msgSpotifyDenied.value,
-          rate_limited: dom.msgRateLimited.value,
-          quota_exceeded: dom.msgQuotaExceeded.value
+          now_playing: messages.now_playing || "",
+          paused: messages.paused || "",
+          nothing_playing: messages.nothing_playing || "",
+          queued: messages.queued || "",
+          usage: messages.usage || "",
+          permission_denied: messages.permission_denied || "",
+          cooldown: messages.cooldown || "",
+          request_error: messages.request_error || "",
+          no_match: messages.no_match || "",
+          no_device: messages.no_device || "",
+          spotify_not_connected: messages.spotify_not_connected || "",
+          spotify_auth_expired: messages.spotify_auth_expired || "",
+          spotify_denied: messages.spotify_denied || "",
+          rate_limited: messages.rate_limited || "",
+          quota_exceeded: messages.quota_exceeded || ""
         }
       }
     };
@@ -122,7 +122,7 @@ class SettingsStore {
 }
 
 /**
- * Main Controller orchestrating DOM interactions, UI feedback, and component lifecycles.
+ * Main Controller orchestrating DOM interactions, UI feedback, and single-input template management.
  */
 class SetupController {
   constructor() {
@@ -130,6 +130,25 @@ class SetupController {
     this.store = new SettingsStore((dirty) => this.renderDirtyState(dirty));
     this.pollTimer = null;
     this.activeBotName = "OverlayBot";
+
+    this.currentTemplateKey = "now_playing";
+    this.messages = {
+      now_playing: "",
+      paused: "",
+      nothing_playing: "",
+      queued: "",
+      usage: "",
+      permission_denied: "",
+      cooldown: "",
+      request_error: "",
+      no_match: "",
+      no_device: "",
+      spotify_not_connected: "",
+      spotify_auth_expired: "",
+      spotify_denied: "",
+      rate_limited: "",
+      quota_exceeded: ""
+    };
 
     this.dom = {
       message: document.getElementById("message"),
@@ -143,7 +162,6 @@ class SetupController {
       // Live Chat Preview
       previewBotName: document.getElementById("preview-bot-name"),
       previewBotText: document.getElementById("preview-bot-text"),
-      previewTemplateLabel: document.getElementById("preview-template-label"),
 
       // Twitch
       twitchClientId: document.getElementById("twitch-client-id"),
@@ -168,22 +186,10 @@ class SetupController {
       userCooldown: document.getElementById("user-cooldown"),
       globalCooldown: document.getElementById("global-cooldown"),
 
-      // Message Templates
-      msgNowPlaying: document.getElementById("message-now-playing"),
-      msgPaused: document.getElementById("message-paused"),
-      msgNothingPlaying: document.getElementById("message-nothing-playing"),
-      msgQueued: document.getElementById("message-queued"),
-      msgUsage: document.getElementById("message-usage"),
-      msgPermissionDenied: document.getElementById("message-permission-denied"),
-      msgCooldown: document.getElementById("message-cooldown"),
-      msgRequestError: document.getElementById("message-request-error"),
-      msgNoMatch: document.getElementById("message-no-match"),
-      msgNoDevice: document.getElementById("message-no-device"),
-      msgSpotifyNotConnected: document.getElementById("message-spotify-not-connected"),
-      msgSpotifyAuthExpired: document.getElementById("message-spotify-auth-expired"),
-      msgSpotifyDenied: document.getElementById("message-spotify-denied"),
-      msgRateLimited: document.getElementById("message-rate-limited"),
-      msgQuotaExceeded: document.getElementById("message-quota-exceeded")
+      // Single-Input Message Manager
+      templateSelector: document.getElementById("template-selector"),
+      activeTemplateInput: document.getElementById("active-template-input"),
+      activeTagPills: document.getElementById("active-tag-pills")
     };
   }
 
@@ -199,12 +205,7 @@ class SetupController {
     const inputs = [
       this.dom.twitchClientId, this.dom.twitchChannel, this.dom.spotifyClientId,
       this.dom.chatEnabled, this.dom.requestsEnabled, this.dom.currentSongCommands,
-      this.dom.requestCommands, this.dom.requestRole, this.dom.userCooldown, this.dom.globalCooldown,
-      this.dom.msgNowPlaying, this.dom.msgPaused, this.dom.msgNothingPlaying, this.dom.msgQueued,
-      this.dom.msgUsage, this.dom.msgPermissionDenied, this.dom.msgCooldown, this.dom.msgRequestError,
-      this.dom.msgNoMatch, this.dom.msgNoDevice, this.dom.msgSpotifyNotConnected,
-      this.dom.msgSpotifyAuthExpired, this.dom.msgSpotifyDenied, this.dom.msgRateLimited,
-      this.dom.msgQuotaExceeded
+      this.dom.requestCommands, this.dom.requestRole, this.dom.userCooldown, this.dom.globalCooldown
     ];
 
     inputs.forEach((el) => {
@@ -213,29 +214,17 @@ class SetupController {
       el.addEventListener("change", () => this.store.setDirty(true));
     });
 
-    // Message preview listeners
-    const textareas = [
-      { el: this.dom.msgNowPlaying, name: "Now Playing" },
-      { el: this.dom.msgPaused, name: "Paused Track" },
-      { el: this.dom.msgNothingPlaying, name: "Nothing Playing" },
-      { el: this.dom.msgQueued, name: "Queued Track" },
-      { el: this.dom.msgUsage, name: "Command Usage" },
-      { el: this.dom.msgPermissionDenied, name: "Permission Denied" },
-      { el: this.dom.msgCooldown, name: "Cooldown" },
-      { el: this.dom.msgRequestError, name: "Request Error" },
-      { el: this.dom.msgNoMatch, name: "No Match" },
-      { el: this.dom.msgNoDevice, name: "No Device" },
-      { el: this.dom.msgSpotifyNotConnected, name: "Spotify Not Connected" },
-      { el: this.dom.msgSpotifyAuthExpired, name: "Auth Expired" },
-      { el: this.dom.msgSpotifyDenied, name: "Request Denied" },
-      { el: this.dom.msgRateLimited, name: "Rate Limited" },
-      { el: this.dom.msgQuotaExceeded, name: "Quota Exceeded" }
-    ];
+    // Single-input template manager listeners
+    this.dom.templateSelector.addEventListener("change", () => {
+      this.saveActiveInputToMemory();
+      this.currentTemplateKey = this.dom.templateSelector.value;
+      this.loadActiveTemplateFromMemory();
+    });
 
-    textareas.forEach(({ el, name }) => {
-      if (!el) return;
-      el.addEventListener("focus", () => this.updateLivePreview(el.value, name));
-      el.addEventListener("input", () => this.updateLivePreview(el.value, name));
+    this.dom.activeTemplateInput.addEventListener("input", () => {
+      this.messages[this.currentTemplateKey] = this.dom.activeTemplateInput.value;
+      this.store.setDirty(true);
+      this.updateLivePreview();
     });
 
     // Actions
@@ -267,51 +256,53 @@ class SetupController {
       this.dom.copyRedirectBtn.innerHTML = `<i class="fa-solid fa-check"></i> Copied!`;
       setTimeout(() => { this.dom.copyRedirectBtn.innerHTML = originalHTML; }, 2000);
     });
+  }
 
-    // Category Tabs
-    document.querySelectorAll(".tab-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-        document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
-        btn.classList.add("active");
-        const panel = document.getElementById(btn.getAttribute("data-tab"));
-        if (panel) {
-          panel.classList.add("active");
-          const firstTextarea = panel.querySelector("textarea");
-          if (firstTextarea) {
-            const label = firstTextarea.previousElementSibling ? firstTextarea.previousElementSibling.textContent : "Message";
-            this.updateLivePreview(firstTextarea.value, label);
-          }
-        }
-      });
-    });
+  saveActiveInputToMemory() {
+    this.messages[this.currentTemplateKey] = this.dom.activeTemplateInput.value;
+  }
 
-    // Click-to-insert placeholder tag pills
-    document.querySelectorAll(".tag-pill").forEach((pill) => {
+  loadActiveTemplateFromMemory() {
+    this.dom.activeTemplateInput.value = this.messages[this.currentTemplateKey] || "";
+    this.renderTokenPills();
+    this.updateLivePreview();
+  }
+
+  renderTokenPills() {
+    const selectedOption = this.dom.templateSelector.selectedOptions[0];
+    const tokensAttr = selectedOption ? selectedOption.getAttribute("data-tokens") : "";
+    const container = this.dom.activeTagPills;
+    container.innerHTML = "";
+
+    if (!tokensAttr) return;
+
+    const tokens = tokensAttr.split(",").map((t) => t.trim()).filter(Boolean);
+    tokens.forEach((token) => {
+      const pill = document.createElement("span");
+      pill.className = "tag-pill";
+      pill.textContent = `+${token}`;
+      pill.title = `Insert ${token}`;
       pill.addEventListener("click", () => {
-        const token = pill.getAttribute("data-insert");
-        const parentField = pill.closest(".field");
-        const textarea = parentField ? parentField.querySelector("textarea") : null;
-        if (textarea && token) {
-          const start = textarea.selectionStart;
-          const end = textarea.selectionEnd;
-          const text = textarea.value;
-          textarea.value = text.substring(0, start) + token + text.substring(end);
-          textarea.selectionStart = textarea.selectionEnd = start + token.length;
-          textarea.focus();
-          this.store.setDirty(true);
-          const label = parentField.querySelector("label") ? parentField.querySelector("label").textContent : "Message";
-          this.updateLivePreview(textarea.value, label);
-        }
+        const input = this.dom.activeTemplateInput;
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? input.value.length;
+        const text = input.value;
+        input.value = text.substring(0, start) + token + text.substring(end);
+        input.selectionStart = input.selectionEnd = start + token.length;
+        input.focus();
+        this.messages[this.currentTemplateKey] = input.value;
+        this.store.setDirty(true);
+        this.updateLivePreview();
       });
+      container.appendChild(pill);
     });
   }
 
-  updateLivePreview(rawText, label = "Now Playing") {
-    this.dom.previewTemplateLabel.textContent = label;
+  updateLivePreview() {
+    const rawText = this.messages[this.currentTemplateKey] || "";
     this.dom.previewBotName.textContent = `${this.activeBotName}:`;
 
-    if (!rawText || !rawText.trim()) {
+    if (!rawText.trim()) {
       this.dom.previewBotText.innerHTML = `<em>(Message is blank / silenced)</em>`;
       return;
     }
@@ -364,23 +355,11 @@ class SetupController {
     this.dom.globalCooldown.value = settings.chat?.request_global_cooldown_secs ?? 5;
 
     const msgs = settings.chat?.messages || {};
-    this.dom.msgNowPlaying.value = msgs.now_playing || "";
-    this.dom.msgPaused.value = msgs.paused || "";
-    this.dom.msgNothingPlaying.value = msgs.nothing_playing || "";
-    this.dom.msgQueued.value = msgs.queued || "";
-    this.dom.msgUsage.value = msgs.usage || "";
-    this.dom.msgPermissionDenied.value = msgs.permission_denied || "";
-    this.dom.msgCooldown.value = msgs.cooldown || "";
-    this.dom.msgRequestError.value = msgs.request_error || "";
-    this.dom.msgNoMatch.value = msgs.no_match || "";
-    this.dom.msgNoDevice.value = msgs.no_device || "";
-    this.dom.msgSpotifyNotConnected.value = msgs.spotify_not_connected || "";
-    this.dom.msgSpotifyAuthExpired.value = msgs.spotify_auth_expired || "";
-    this.dom.msgSpotifyDenied.value = msgs.spotify_denied || "";
-    this.dom.msgRateLimited.value = msgs.rate_limited || "";
-    this.dom.msgQuotaExceeded.value = msgs.quota_exceeded || "";
+    Object.keys(this.messages).forEach((key) => {
+      this.messages[key] = msgs[key] || "";
+    });
 
-    this.updateLivePreview(this.dom.msgNowPlaying.value, "Now Playing");
+    this.loadActiveTemplateFromMemory();
   }
 
   renderStatus(data, overwriteSettings = false) {
@@ -435,7 +414,8 @@ class SetupController {
 
   async handleSave(showMessage = true) {
     try {
-      const payload = this.store.toPayload(this.dom);
+      this.saveActiveInputToMemory();
+      const payload = this.store.toPayload(this.dom, this.messages);
       const result = await this.api.saveSettings(payload);
       this.store.setDirty(false);
       if (showMessage) {
