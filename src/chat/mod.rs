@@ -472,11 +472,13 @@ async fn handle_event(
         let spotify_client_id = config.integrations.spotify_client_id.trim();
         let track = spotify
             .search_or_resolve(&state.integration, spotify_client_id, args)
-            .await?;
+            .await
+            .map_err(|error| ("search", error))?;
         spotify
             .add_to_queue(&state.integration, spotify_client_id, &track.uri)
-            .await?;
-        Ok::<_, SpotifyError>(track)
+            .await
+            .map_err(|error| ("queue", error))?;
+        Ok::<_, (&'static str, SpotifyError)>(track)
     }
     .await;
     match result {
@@ -501,14 +503,15 @@ async fn handle_event(
             )
             .await;
         }
-        Err(error) => {
+        Err((stage, error)) => {
             cooldowns.lock().await.release(&user_id);
+            tracing::warn!(stage, ?error, "Spotify song request failed");
             send_chat(
                 twitch,
                 token,
                 client_id,
                 broadcaster_id,
-                &spotify_error_message(error),
+                &spotify_error_message(stage, error),
                 reply_message_id.as_deref(),
             )
             .await;
@@ -556,7 +559,8 @@ fn current_song_response(state: &MediaState) -> String {
     }
 }
 
-fn spotify_error_message(error: SpotifyError) -> String {
+fn spotify_error_message(stage: &str, error: SpotifyError) -> String {
+    let label = if stage == "queue" { "queue" } else { "search" };
     match error {
         SpotifyError::NotConnected => {
             "Spotify is not connected. Open Setup Twitch & Spotify.".to_owned()
@@ -577,9 +581,39 @@ fn spotify_error_message(error: SpotifyError) -> String {
         SpotifyError::QuotaExceeded => {
             "Spotify development quota is exhausted; try again later.".to_owned()
         }
-        SpotifyError::Api(_, _) | SpotifyError::Network(_) | SpotifyError::Storage(_) => {
-            "Spotify could not process that request right now.".to_owned()
+        SpotifyError::Api(status, body) => format!(
+            "Spotify {label} failed (HTTP {status}): {}",
+            spotify_api_message(&body)
+        ),
+        SpotifyError::Network(error) if error.is_decode() => {
+            format!("Spotify {label} returned an unreadable response: {error}")
         }
+        SpotifyError::Network(_) => format!("Spotify {label} could not reach Spotify."),
+        SpotifyError::Storage(error) => {
+            format!("Spotify {label} could not read saved authorization: {error}")
+        }
+    }
+}
+
+fn spotify_api_message(body: &str) -> String {
+    let message = serde_json::from_str::<serde_json::Value>(body)
+        .ok()
+        .and_then(|value| {
+            value
+                .get("error")
+                .and_then(|error| error.get("message").and_then(|message| message.as_str()))
+                .or_else(|| {
+                    value
+                        .get("error_description")
+                        .and_then(|message| message.as_str())
+                })
+                .map(str::to_owned)
+        })
+        .unwrap_or_else(|| body.trim().chars().take(160).collect());
+    if message.is_empty() {
+        "no error details returned".to_owned()
+    } else {
+        message
     }
 }
 
@@ -809,8 +843,8 @@ async fn set_chat_status(
 #[cfg(test)]
 mod tests {
     use super::{
-        current_song_response, parse_command, ChatConfig, CooldownState, EventSubEnvelope,
-        SeenMessageIds, UserRole,
+        current_song_response, parse_command, spotify_api_message, ChatConfig, CooldownState,
+        EventSubEnvelope, SeenMessageIds, UserRole,
     };
     use crate::media::MediaState;
 
@@ -893,6 +927,14 @@ mod tests {
         assert_eq!(
             envelope.payload.session.and_then(|session| session.id),
             Some("session-123".to_owned())
+        );
+    }
+
+    #[test]
+    fn spotify_api_error_extracts_safe_message() {
+        assert_eq!(
+            spotify_api_message(r#"{"error":{"status":400,"message":"Invalid request"}}"#),
+            "Invalid request"
         );
     }
 }
