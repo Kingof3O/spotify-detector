@@ -37,8 +37,10 @@
   window.addEventListener("load", queueTitleMeasurement, { once: true });
 
   artwork.addEventListener("load", function () {
-    artworkShell.classList.add("has-artwork");
-    updateArtworkPalette();
+    if (artwork.naturalWidth > 0) {
+      artworkShell.classList.add("has-artwork");
+      updateArtworkPalette();
+    }
   });
 
   artwork.addEventListener("error", function () {
@@ -163,11 +165,21 @@
     const artworkUrl = displayValue(next.artwork_url);
     if (artworkUrl) {
       if (artwork.getAttribute("src") !== artworkUrl) {
-        artworkShell.classList.remove("has-artwork");
         artwork.setAttribute("src", artworkUrl);
-      } else if (artwork.complete && artwork.naturalWidth > 0) {
+      }
+      if (artwork.complete && artwork.naturalWidth > 0) {
         artworkShell.classList.add("has-artwork");
         updateArtworkPalette();
+      }
+      if (typeof artwork.decode === "function") {
+        artwork.decode().then(function () {
+          if (artwork.getAttribute("src") === artworkUrl && artwork.naturalWidth > 0) {
+            artworkShell.classList.add("has-artwork");
+            updateArtworkPalette();
+          }
+        }).catch(function () {
+          // If decode rejects, load event handles it
+        });
       }
     } else {
       artwork.removeAttribute("src");
