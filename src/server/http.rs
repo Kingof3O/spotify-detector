@@ -410,6 +410,7 @@ fn twitch_health_error(error: &TwitchError) -> String {
         TwitchError::Authentication(message) => message.clone(),
         TwitchError::InvalidChannel(channel) => format!("Twitch channel @{channel} was not found."),
         TwitchError::Network(_) => "Twitch could not be reached.".to_owned(),
+        TwitchError::MessageDropped(message) => format!("Twitch dropped a chat reply: {message}"),
     }
 }
 

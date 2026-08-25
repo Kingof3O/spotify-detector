@@ -274,10 +274,27 @@ impl TwitchApi {
             .send()
             .await
             .map_err(TwitchError::Network)?;
-        if response.status().is_success() {
+        if !response.status().is_success() {
+            return Err(map_error(response).await);
+        }
+        let body = response
+            .json::<SendChatResponse>()
+            .await
+            .map_err(TwitchError::Network)?;
+        let Some(result) = body.data.into_iter().next() else {
+            return Err(TwitchError::MessageDropped(
+                "Twitch returned no send result".to_owned(),
+            ));
+        };
+        if result.is_sent {
             Ok(())
         } else {
-            Err(map_error(response).await)
+            Err(TwitchError::MessageDropped(
+                result
+                    .drop_reason
+                    .map(|reason| reason.message)
+                    .unwrap_or_else(|| "Twitch dropped the chat message".to_owned()),
+            ))
         }
     }
 }
@@ -331,6 +348,23 @@ struct ValidateResponse {
     login: String,
 }
 
+#[derive(Deserialize)]
+struct SendChatResponse {
+    data: Vec<SendChatResult>,
+}
+
+#[derive(Deserialize)]
+struct SendChatResult {
+    is_sent: bool,
+    #[serde(default)]
+    drop_reason: Option<DropReason>,
+}
+
+#[derive(Deserialize)]
+struct DropReason {
+    message: String,
+}
+
 async fn map_error(response: reqwest::Response) -> TwitchError {
     let status = response.status();
     let body = response.text().await.unwrap_or_default();
@@ -347,4 +381,6 @@ pub enum TwitchError {
     Api(u16, String),
     #[error("Twitch network request failed: {0}")]
     Network(reqwest::Error),
+    #[error("Twitch dropped the chat reply: {0}")]
+    MessageDropped(String),
 }

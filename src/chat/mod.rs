@@ -372,12 +372,18 @@ async fn handle_event(
     let Some(event) = envelope.payload.event else {
         return EventResult::Continue;
     };
-    let Some(message_id) = envelope.metadata.message_id.or(event.message_id.clone()) else {
+    let Some(delivery_id) = envelope
+        .metadata
+        .message_id
+        .clone()
+        .or(event.message_id.clone())
+    else {
         return EventResult::Continue;
     };
-    if !seen.insert(message_id.clone()) {
+    if !seen.insert(delivery_id) {
         return EventResult::Continue;
     }
+    let reply_message_id = event.message_id.clone();
     if event.chatter_user_id.as_deref() == Some(token.user_id.as_str()) {
         return EventResult::Continue;
     }
@@ -399,7 +405,7 @@ async fn handle_event(
                 client_id,
                 broadcaster_id,
                 &response,
-                Some(&message_id),
+                reply_message_id.as_deref(),
             )
             .await;
         }
@@ -422,7 +428,7 @@ async fn handle_event(
             client_id,
             broadcaster_id,
             "Song requests are not available for your role.",
-            Some(&message_id),
+            reply_message_id.as_deref(),
         )
         .await;
         return EventResult::Continue;
@@ -437,7 +443,7 @@ async fn handle_event(
             client_id,
             broadcaster_id,
             "Usage: !songrequest <Spotify track link or song search>",
-            Some(&message_id),
+            reply_message_id.as_deref(),
         )
         .await;
         return EventResult::Continue;
@@ -455,7 +461,7 @@ async fn handle_event(
                     event.chatter_user_name.as_deref().unwrap_or("viewer"),
                     remaining
                 ),
-                Some(&message_id),
+                reply_message_id.as_deref(),
             )
             .await;
             return EventResult::Continue;
@@ -491,7 +497,7 @@ async fn handle_event(
                 client_id,
                 broadcaster_id,
                 &response,
-                Some(&message_id),
+                reply_message_id.as_deref(),
             )
             .await;
         }
@@ -503,7 +509,7 @@ async fn handle_event(
                 client_id,
                 broadcaster_id,
                 &spotify_error_message(error),
-                Some(&message_id),
+                reply_message_id.as_deref(),
             )
             .await;
         }
@@ -857,12 +863,24 @@ mod tests {
     #[test]
     fn eventsub_notification_reads_nested_subscription_type() {
         let envelope: EventSubEnvelope = serde_json::from_str(
-            r#"{"metadata":{"message_type":"notification","subscription_type":"channel.chat.message"},"payload":{"subscription":{"type":"channel.chat.message"},"event":{}}}"#,
+            r#"{"metadata":{"message_id":"delivery-123","message_type":"notification","subscription_type":"channel.chat.message"},"payload":{"subscription":{"type":"channel.chat.message"},"event":{"message_id":"chat-456"}}}"#,
         )
         .expect("notification parses");
         assert_eq!(
             envelope.metadata.subscription_type,
             Some("channel.chat.message".to_owned())
+        );
+        assert_eq!(
+            envelope.metadata.message_id.as_deref(),
+            Some("delivery-123")
+        );
+        assert_eq!(
+            envelope
+                .payload
+                .event
+                .and_then(|event| event.message_id)
+                .as_deref(),
+            Some("chat-456")
         );
     }
 
