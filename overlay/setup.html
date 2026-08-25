@@ -72,6 +72,7 @@
     <script>
       (() => {
         let csrf = "";
+        let dirty = false;
         const $ = (id) => document.getElementById(id);
         const message = (text, error = false) => { $("message").textContent = text; $("message").className = error ? "error" : ""; };
         const aliases = (value) => value.split(",").map((item) => item.trim()).filter(Boolean);
@@ -84,8 +85,7 @@
           return body;
         }
         function setStatus(element, text, error = false) { element.textContent = text; element.className = error ? "error" : "status"; }
-        function fill(data) {
-          csrf = data.csrf_token;
+        function fillSettings(data) {
           const settings = data.settings;
           $("twitch-client-id").value = settings.twitch_client_id || "";
           $("twitch-channel").value = settings.twitch_channel || "";
@@ -97,11 +97,19 @@
           $("request-role").value = settings.chat.request_role;
           $("user-cooldown").value = settings.chat.request_user_cooldown_secs;
           $("global-cooldown").value = settings.chat.request_global_cooldown_secs;
+        }
+        function fillStatus(data, overwriteSettings = false) {
+          csrf = data.csrf_token;
+          if (overwriteSettings || !dirty) fillSettings(data);
           setStatus($("twitch-status"), data.status.twitch_connected ? `Connected as ${data.status.twitch_user || "bot"}` : (data.status.twitch_status || "Not connected"), !data.status.twitch_connected && data.status.twitch_status.startsWith("error"));
           setStatus($("spotify-status"), data.status.spotify_connected ? "Connected" : (data.status.spotify_status || "Not connected"), !data.status.spotify_connected && data.status.spotify_status.startsWith("error"));
           if (data.twitch_device && data.twitch_device.state === "pending") $("twitch-device").textContent = `Authorize at ${data.twitch_device.verification_uri} with code ${data.twitch_device.user_code}.`;
         }
-        async function load() { try { fill(await api("/api/setup/status")); } catch (error) { message(error.message, true); } }
+        async function load(initial = false) { try { fillStatus(await api("/api/setup/status"), initial); } catch (error) { message(error.message, true); } }
+        ["twitch-client-id", "twitch-channel", "spotify-client-id", "chat-enabled", "requests-enabled", "current-song-commands", "request-commands", "request-role", "user-cooldown", "global-cooldown"].forEach((id) => {
+          $(id).addEventListener("input", () => { dirty = true; });
+          $(id).addEventListener("change", () => { dirty = true; });
+        });
         function settingsPayload() {
           return {
               twitch_client_id: $("twitch-client-id").value.trim(), twitch_channel: $("twitch-channel").value.trim(), spotify_client_id: $("spotify-client-id").value.trim(),
@@ -110,6 +118,7 @@
         }
         async function saveSettings(showMessage = true) {
           const result = await api("/api/setup/settings", { method: "PUT", body: JSON.stringify(settingsPayload()) });
+          dirty = false;
           if (showMessage) message("Settings saved.");
           await load();
           return result;
@@ -123,7 +132,7 @@
         $("spotify-connect").onclick = async () => { try { await saveSettings(false); const result = await api("/api/auth/spotify/start", { method: "POST" }); window.location = result.authorization_url; } catch (error) { message(error.message, true); } };
         $("spotify-disconnect").onclick = async () => { try { await api("/api/auth/spotify/disconnect", { method: "POST" }); message("Spotify disconnected."); await load(); } catch (error) { message(error.message, true); } };
         $("redirect-uri").textContent = `${location.origin}/auth/spotify/callback`;
-        load(); setInterval(load, 3000);
+        load(true); setInterval(() => load(false), 3000);
       })();
     </script>
   </body>
