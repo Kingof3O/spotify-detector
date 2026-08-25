@@ -23,6 +23,7 @@ const TRAY_ICON_ID: u32 = 1;
 const TRAY_CALLBACK_MESSAGE: u32 = WM_APP + 1;
 const MENU_OPEN_OVERLAY: usize = 1_001;
 const MENU_STOP: usize = 1_002;
+const MENU_SETUP: usize = 1_003;
 
 thread_local! {
     static CONTEXT: RefCell<Option<TrayContext>> = const { RefCell::new(None) };
@@ -31,15 +32,20 @@ thread_local! {
 struct TrayContext {
     menu: HMENU,
     overlay_url: Vec<u16>,
+    setup_url: Vec<u16>,
     shutdown_tx: watch::Sender<bool>,
 }
 
-pub fn spawn(overlay_url: String, shutdown_tx: watch::Sender<bool>) -> Option<JoinHandle<()>> {
+pub fn spawn(
+    overlay_url: String,
+    setup_url: String,
+    shutdown_tx: watch::Sender<bool>,
+) -> Option<JoinHandle<()>> {
     match thread::Builder::new()
         .name("spotify-overlay-tray".to_owned())
         .stack_size(256 * 1024)
         .spawn(move || {
-            if let Err(error) = run(&overlay_url, shutdown_tx) {
+            if let Err(error) = run(&overlay_url, &setup_url, shutdown_tx) {
                 tracing::warn!(?error, "notification-area icon could not be started");
             }
         }) {
@@ -51,7 +57,7 @@ pub fn spawn(overlay_url: String, shutdown_tx: watch::Sender<bool>) -> Option<Jo
     }
 }
 
-fn run(overlay_url: &str, shutdown_tx: watch::Sender<bool>) -> Result<()> {
+fn run(overlay_url: &str, setup_url: &str, shutdown_tx: watch::Sender<bool>) -> Result<()> {
     // The hidden window receives shell callbacks while the thread sleeps in GetMessageW.
     let class_name = wide("SpotifyOverlayTrayWindow");
     let instance = unsafe { GetModuleHandleW(PCWSTR::null()) }?;
@@ -98,6 +104,7 @@ fn run(overlay_url: &str, shutdown_tx: watch::Sender<bool>) -> Result<()> {
         slot.replace(Some(TrayContext {
             menu,
             overlay_url: wide(overlay_url),
+            setup_url: wide(setup_url),
             shutdown_tx,
         }));
     });
@@ -147,6 +154,7 @@ fn create_menu() -> Result<HMENU> {
     let menu = unsafe { CreatePopupMenu() }?;
     let result = unsafe {
         AppendMenuW(menu, MF_STRING, MENU_OPEN_OVERLAY, w!("Open overlay"))
+            .and_then(|_| AppendMenuW(menu, MF_STRING, MENU_SETUP, w!("Setup Twitch & Spotify")))
             .and_then(|_| AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null()))
             .and_then(|_| AppendMenuW(menu, MF_STRING, MENU_STOP, w!("Stop Spotify Overlay")))
     };
@@ -189,6 +197,7 @@ unsafe extern "system" fn window_proc(
         WM_COMMAND => {
             match wparam.0 & 0xffff {
                 MENU_OPEN_OVERLAY => open_overlay(hwnd),
+                MENU_SETUP => open_setup(hwnd),
                 MENU_STOP => {
                     CONTEXT.with(|slot| {
                         if let Some(context) = slot.borrow().as_ref() {
@@ -242,6 +251,28 @@ fn open_overlay(hwnd: HWND) {
             Some(hwnd),
             w!("open"),
             PCWSTR(overlay_url.as_ptr()),
+            PCWSTR::null(),
+            PCWSTR::null(),
+            SW_SHOWNORMAL,
+        );
+    }
+}
+
+fn open_setup(hwnd: HWND) {
+    let setup_url = CONTEXT.with(|slot| {
+        slot.borrow()
+            .as_ref()
+            .map(|context| context.setup_url.clone())
+    });
+    let Some(setup_url) = setup_url else {
+        return;
+    };
+
+    unsafe {
+        let _ = ShellExecuteW(
+            Some(hwnd),
+            w!("open"),
+            PCWSTR(setup_url.as_ptr()),
             PCWSTR::null(),
             PCWSTR::null(),
             SW_SHOWNORMAL,

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spotify Overlay Setup</title>
+    <style>
+      :root { color-scheme: dark; font-family: "Segoe UI", Arial, sans-serif; }
+      body { margin: 0; background: #111214; color: #f0ddd1; }
+      main { width: min(760px, calc(100% - 32px)); margin: 24px auto; }
+      h1 { margin: 0 0 8px; font-size: 28px; }
+      p, small { color: #c9b6b2; }
+      section { margin: 18px 0; padding: 18px; border: 1px solid #3c3638; border-radius: 14px; background: #211d20; }
+      h2 { margin: 0 0 12px; font-size: 18px; }
+      label { display: block; margin: 10px 0; color: #dfceca; }
+      input, select { display: block; width: 100%; margin-top: 5px; padding: 9px 10px; border: 1px solid #51474a; border-radius: 8px; background: #141316; color: #fff; box-sizing: border-box; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .checks { display: flex; flex-wrap: wrap; gap: 14px; }
+      .checks label { display: flex; align-items: center; gap: 7px; margin: 4px 0; }
+      .checks input { width: auto; margin: 0; }
+      button, a.button { display: inline-block; margin: 7px 7px 0 0; padding: 9px 13px; border: 0; border-radius: 8px; background: #a86e92; color: #fff; cursor: pointer; text-decoration: none; }
+      button.secondary { background: #51474a; }
+      #message { min-height: 20px; color: #e7bf9c; }
+      .status { color: #9bd5a6; }
+      .error { color: #f09b9b; }
+      code { color: #f0ddd1; }
+      @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Twitch &amp; Spotify setup</h1>
+      <p>This page stays local on this computer. The OBS overlay works without connecting either account.</p>
+      <div id="message"></div>
+
+      <section>
+        <h2>Twitch bot</h2>
+        <label>Twitch Client ID<input id="twitch-client-id" autocomplete="off" /></label>
+        <label>Target channel<input id="twitch-channel" placeholder="your_channel_name" autocomplete="off" /></label>
+        <p id="twitch-status" class="status">Not connected</p>
+        <button id="twitch-connect">Authorize bot account</button>
+        <button id="twitch-disconnect" class="secondary">Disconnect</button>
+        <p id="twitch-device"></p>
+        <small>Create a Twitch application configured for Device Code flow. Make the bot account a moderator in the target channel.</small>
+      </section>
+
+      <section>
+        <h2>Spotify</h2>
+        <label>Spotify Client ID<input id="spotify-client-id" autocomplete="off" /></label>
+        <p id="spotify-status" class="status">Not connected</p>
+        <button id="spotify-connect">Authorize Spotify</button>
+        <button id="spotify-disconnect" class="secondary">Disconnect</button>
+        <small>Use a Spotify app with this redirect URI: <code id="redirect-uri"></code></small>
+      </section>
+
+      <section>
+        <h2>Commands</h2>
+        <div class="checks">
+          <label><input id="chat-enabled" type="checkbox" /> Enable Twitch commands</label>
+          <label><input id="requests-enabled" type="checkbox" /> Enable song requests</label>
+        </div>
+        <label>Current-song aliases (comma separated)<input id="current-song-commands" /></label>
+        <label>Request aliases (comma separated)<input id="request-commands" /></label>
+        <label>Minimum request role<select id="request-role"><option value="everyone">Everyone</option><option value="subscriber">Subscriber</option><option value="vip">VIP</option><option value="moderator">Moderator</option><option value="broadcaster">Broadcaster</option></select></label>
+        <div class="row">
+          <label>Per-viewer cooldown (seconds)<input id="user-cooldown" type="number" min="0" max="86400" /></label>
+          <label>Global cooldown (seconds)<input id="global-cooldown" type="number" min="0" max="86400" /></label>
+        </div>
+        <button id="save">Save settings</button>
+      </section>
+    </main>
+    <script>
+      (() => {
+        let csrf = "";
+        const $ = (id) => document.getElementById(id);
+        const message = (text, error = false) => { $("message").textContent = text; $("message").className = error ? "error" : ""; };
+        const aliases = (value) => value.split(",").map((item) => item.trim()).filter(Boolean);
+        async function api(url, options = {}) {
+          const headers = { ...(options.body ? { "Content-Type": "application/json" } : {}), ...(options.headers || {}) };
+          if (options.method && options.method !== "GET") headers["X-Spotify-Overlay-CSRF"] = csrf;
+          const response = await fetch(url, { ...options, headers });
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(body.error || body.message || `Request failed (${response.status})`);
+          return body;
+        }
+        function setStatus(element, text, error = false) { element.textContent = text; element.className = error ? "error" : "status"; }
+        function fill(data) {
+          csrf = data.csrf_token;
+          const settings = data.settings;
+          $("twitch-client-id").value = settings.twitch_client_id || "";
+          $("twitch-channel").value = settings.twitch_channel || "";
+          $("spotify-client-id").value = settings.spotify_client_id || "";
+          $("chat-enabled").checked = settings.chat.enabled;
+          $("requests-enabled").checked = settings.chat.requests_enabled;
+          $("current-song-commands").value = settings.chat.current_song_commands.join(", ");
+          $("request-commands").value = settings.chat.request_commands.join(", ");
+          $("request-role").value = settings.chat.request_role;
+          $("user-cooldown").value = settings.chat.request_user_cooldown_secs;
+          $("global-cooldown").value = settings.chat.request_global_cooldown_secs;
+          setStatus($("twitch-status"), data.status.twitch_connected ? `Connected as ${data.status.twitch_user || "bot"}` : (data.status.twitch_status || "Not connected"), !data.status.twitch_connected && data.status.twitch_status.startsWith("error"));
+          setStatus($("spotify-status"), data.status.spotify_connected ? "Connected" : (data.status.spotify_status || "Not connected"), !data.status.spotify_connected && data.status.spotify_status.startsWith("error"));
+          if (data.twitch_device && data.twitch_device.state === "pending") $("twitch-device").textContent = `Authorize at ${data.twitch_device.verification_uri} with code ${data.twitch_device.user_code}.`;
+        }
+        async function load() { try { fill(await api("/api/setup/status")); } catch (error) { message(error.message, true); } }
+        function settingsPayload() {
+          return {
+              twitch_client_id: $("twitch-client-id").value.trim(), twitch_channel: $("twitch-channel").value.trim(), spotify_client_id: $("spotify-client-id").value.trim(),
+              chat: { enabled: $("chat-enabled").checked, requests_enabled: $("requests-enabled").checked, current_song_commands: aliases($("current-song-commands").value), request_commands: aliases($("request-commands").value), request_role: $("request-role").value, request_user_cooldown_secs: Number($("user-cooldown").value), request_global_cooldown_secs: Number($("global-cooldown").value) }
+          };
+        }
+        async function saveSettings(showMessage = true) {
+          const result = await api("/api/setup/settings", { method: "PUT", body: JSON.stringify(settingsPayload()) });
+          if (showMessage) message("Settings saved.");
+          await load();
+          return result;
+        }
+        $("save").onclick = async () => {
+          try { await saveSettings();
+          } catch (error) { message(error.message, true); }
+        };
+        $("twitch-connect").onclick = async () => { try { await saveSettings(false); const result = await api("/api/auth/twitch/start", { method: "POST" }); $("twitch-device").textContent = `Authorize at ${result.verification_uri} with code ${result.user_code}.`; window.open(result.verification_uri, "_blank"); message("Waiting for Twitch authorization…"); } catch (error) { message(error.message, true); } };
+        $("twitch-disconnect").onclick = async () => { try { await api("/api/auth/twitch/disconnect", { method: "POST" }); message("Twitch disconnected."); await load(); } catch (error) { message(error.message, true); } };
+        $("spotify-connect").onclick = async () => { try { await saveSettings(false); const result = await api("/api/auth/spotify/start", { method: "POST" }); window.location = result.authorization_url; } catch (error) { message(error.message, true); } };
+        $("spotify-disconnect").onclick = async () => { try { await api("/api/auth/spotify/disconnect", { method: "POST" }); message("Spotify disconnected."); await load(); } catch (error) { message(error.message, true); } };
+        $("redirect-uri").textContent = `${location.origin}/auth/spotify/callback`;
+        load(); setInterval(load, 3000);
+      })();
+    </script>
+  </body>
+</html>

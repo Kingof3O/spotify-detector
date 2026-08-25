@@ -1,19 +1,27 @@
 use axum::{
     body::Body,
-    extract::{ConnectInfo, State},
+    extract::{ConnectInfo, Query, State},
     http::{header, HeaderMap, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
-    routing::{get, post},
+    routing::{get, post, put},
     Json, Router,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+
+use crate::{
+    config::{ChatConfig, Config},
+    integration::{
+        CredentialError, DevicePoll, IntegrationStatus, SpotifyApi, TwitchApi, TwitchDeviceStatus,
+    },
+};
 
 use super::{state::AppState, websocket};
 
 const INDEX_HTML: &str = include_str!("../../overlay/index.html");
 const TEST_HTML: &str = include_str!("../../overlay/test.html");
 const TEST_ARTWORK_SVG: &str = include_str!("../../overlay/test-artwork.svg");
+const SETUP_HTML: &str = include_str!("../../overlay/setup.html");
 const OVERLAY_CSS: &str = include_str!("../../overlay/overlay.css");
 const OVERLAY_JS: &str = include_str!("../../overlay/overlay.js");
 
@@ -21,10 +29,19 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/", get(index))
         .route("/test", get(test))
+        .route("/setup", get(setup))
         .route("/test-artwork.svg", get(test_artwork))
         .route("/overlay.css", get(overlay_css))
         .route("/overlay.js", get(overlay_js))
         .route("/health", get(health))
+        .route("/api/setup/status", get(setup_status))
+        .route("/api/setup/settings", put(save_settings))
+        .route("/api/auth/twitch/start", post(start_twitch_auth))
+        .route("/api/auth/twitch/status", get(twitch_auth_status))
+        .route("/api/auth/twitch/disconnect", post(disconnect_twitch))
+        .route("/api/auth/spotify/start", post(start_spotify_auth))
+        .route("/auth/spotify/callback", get(spotify_callback))
+        .route("/api/auth/spotify/disconnect", post(disconnect_spotify))
         .route("/artwork", get(artwork))
         .route("/ws", get(websocket::upgrade))
         .route("/internal/shutdown", post(shutdown))
@@ -37,6 +54,10 @@ async fn index() -> axum::response::Html<&'static str> {
 
 async fn test() -> axum::response::Html<&'static str> {
     axum::response::Html(TEST_HTML)
+}
+
+async fn setup() -> axum::response::Html<&'static str> {
+    axum::response::Html(SETUP_HTML)
 }
 
 async fn test_artwork() -> impl IntoResponse {
@@ -89,6 +110,458 @@ async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
         available: current.available,
         source: current.source,
     })
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct SetupSettings {
+    twitch_client_id: String,
+    twitch_channel: String,
+    spotify_client_id: String,
+    chat: ChatConfig,
+}
+
+impl SetupSettings {
+    fn from_config(config: &Config) -> Self {
+        Self {
+            twitch_client_id: config.integrations.twitch_client_id.clone(),
+            twitch_channel: config.integrations.twitch_channel.clone(),
+            spotify_client_id: config.integrations.spotify_client_id.clone(),
+            chat: config.integrations.chat.clone(),
+        }
+    }
+
+    fn apply_to(&self, config: &mut Config) {
+        config.integrations.twitch_client_id = self.twitch_client_id.trim().to_owned();
+        config.integrations.twitch_channel = self.twitch_channel.trim().to_ascii_lowercase();
+        config.integrations.spotify_client_id = self.spotify_client_id.trim().to_owned();
+        config.integrations.chat = self.chat.clone();
+    }
+}
+
+#[derive(Serialize)]
+struct SetupStatusResponse {
+    csrf_token: String,
+    settings: SetupSettings,
+    status: IntegrationStatus,
+    twitch_device: Option<TwitchDeviceStatus>,
+}
+
+#[derive(Serialize)]
+struct ErrorResponse {
+    error: String,
+}
+
+#[derive(Serialize)]
+struct TwitchStartResponse {
+    verification_uri: String,
+    user_code: String,
+}
+
+#[derive(Serialize)]
+struct SpotifyStartResponse {
+    authorization_url: String,
+}
+
+#[derive(Deserialize)]
+struct SpotifyCallbackQuery {
+    code: Option<String>,
+    state: Option<String>,
+    error: Option<String>,
+}
+
+async fn setup_status(State(state): State<AppState>) -> Json<SetupStatusResponse> {
+    let config = state.config_snapshot();
+    let mut status = state.integration.status.read().await.clone();
+    if let Ok(credentials) = state.integration.credentials.load() {
+        status.twitch_connected = credentials.twitch.is_some();
+        status.twitch_user = credentials.twitch.map(|token| token.display_name);
+        status.spotify_connected = credentials.spotify.is_some();
+    }
+    let twitch_device = state
+        .integration
+        .twitch_device
+        .lock()
+        .ok()
+        .and_then(|device| device.clone());
+    Json(SetupStatusResponse {
+        csrf_token: state.integration.csrf_token.clone(),
+        settings: SetupSettings::from_config(&config),
+        status,
+        twitch_device,
+    })
+}
+
+async fn twitch_auth_status(State(state): State<AppState>) -> Json<Option<TwitchDeviceStatus>> {
+    Json(
+        state
+            .integration
+            .twitch_device
+            .lock()
+            .ok()
+            .and_then(|device| device.clone()),
+    )
+}
+
+async fn save_settings(
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(settings): Json<SetupSettings>,
+) -> Result<Json<SetupSettings>, (StatusCode, Json<ErrorResponse>)> {
+    ensure_setup_request(peer, &headers, &state)?;
+    let mut config = state.config_snapshot();
+    settings.apply_to(&mut config);
+    config.validate_for_setup().map_err(config_error)?;
+    config.save().map_err(config_error)?;
+    let response = SetupSettings::from_config(&config);
+    let _ = state.config.send(config);
+    state.integration.signal_change();
+    Ok(Json(response))
+}
+
+async fn start_twitch_auth(
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<TwitchStartResponse>, (StatusCode, Json<ErrorResponse>)> {
+    ensure_setup_request(peer, &headers, &state)?;
+    let config = state.config_snapshot();
+    let client_id = config.integrations.twitch_client_id.trim().to_owned();
+    if client_id.is_empty() {
+        return Err(error_response(
+            StatusCode::BAD_REQUEST,
+            "Enter and save a Twitch Client ID first.",
+        ));
+    }
+
+    let api = TwitchApi::new();
+    let device = api.start_device(&client_id).await.map_err(twitch_error)?;
+    let status = TwitchDeviceStatus {
+        state: "pending".to_owned(),
+        verification_uri: Some(device.verification_uri.clone()),
+        user_code: Some(device.user_code.clone()),
+        error: None,
+    };
+    if let Ok(mut current) = state.integration.twitch_device.lock() {
+        *current = Some(status);
+    }
+    state.integration.status.write().await.twitch_status = "waiting_for_authorization".to_owned();
+    let integration = state.integration.clone();
+    tokio::spawn(async move {
+        let mut interval = device.interval.max(2);
+        let deadline =
+            tokio::time::Instant::now() + std::time::Duration::from_secs(device.expires_in);
+        loop {
+            tokio::time::sleep(std::time::Duration::from_secs(interval)).await;
+            if tokio::time::Instant::now() >= deadline {
+                set_twitch_device_error(&integration, "authorization_expired").await;
+                return;
+            }
+            match api.poll_device(&client_id, &device.device_code).await {
+                Ok(DevicePoll::Pending) => {}
+                Ok(DevicePoll::SlowDown) => interval = interval.saturating_add(5),
+                Ok(DevicePoll::Complete(token)) => match integration.credentials.load() {
+                    Ok(mut credentials) => {
+                        credentials.twitch = Some(token.clone());
+                        if let Err(error) = integration.credentials.save(&credentials) {
+                            set_twitch_device_error(
+                                &integration,
+                                &format!("storage_error: {error}"),
+                            )
+                            .await;
+                            return;
+                        }
+                        if let Ok(mut current) = integration.twitch_device.lock() {
+                            *current = Some(TwitchDeviceStatus {
+                                state: "connected".to_owned(),
+                                ..Default::default()
+                            });
+                        }
+                        let mut status = integration.status.write().await;
+                        status.twitch_connected = true;
+                        status.twitch_user = Some(token.display_name);
+                        status.twitch_status = "authorized".to_owned();
+                        status.last_error = None;
+                        integration.signal_change();
+                        return;
+                    }
+                    Err(error) => {
+                        set_twitch_device_error(&integration, &format!("storage_error: {error}"))
+                            .await;
+                        return;
+                    }
+                },
+                Ok(DevicePoll::Denied) => {
+                    set_twitch_device_error(&integration, "authorization_denied").await;
+                    return;
+                }
+                Ok(DevicePoll::Expired) => {
+                    set_twitch_device_error(&integration, "authorization_expired").await;
+                    return;
+                }
+                Ok(DevicePoll::Failed(error)) => {
+                    set_twitch_device_error(&integration, &error).await;
+                    return;
+                }
+                Err(error) => {
+                    set_twitch_device_error(&integration, &error.to_string()).await;
+                    return;
+                }
+            }
+        }
+    });
+    Ok(Json(TwitchStartResponse {
+        verification_uri: device.verification_uri,
+        user_code: device.user_code,
+    }))
+}
+
+async fn disconnect_twitch(
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    ensure_setup_request(peer, &headers, &state)?;
+    state
+        .integration
+        .credentials
+        .clear_twitch()
+        .map_err(storage_error)?;
+    if let Ok(mut device) = state.integration.twitch_device.lock() {
+        *device = None;
+    }
+    state.integration.status.write().await.twitch_connected = false;
+    state.integration.status.write().await.twitch_status = "disconnected".to_owned();
+    state.integration.signal_change();
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn start_spotify_auth(
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<SpotifyStartResponse>, (StatusCode, Json<ErrorResponse>)> {
+    ensure_setup_request(peer, &headers, &state)?;
+    let config = state.config_snapshot();
+    let client_id = config.integrations.spotify_client_id.trim().to_owned();
+    if client_id.is_empty() {
+        return Err(error_response(
+            StatusCode::BAD_REQUEST,
+            "Enter and save a Spotify Client ID first.",
+        ));
+    }
+    let state_token = crate::integration::random_token();
+    let verifier = SpotifyApi::pkce_verifier();
+    let redirect_uri = format!(
+        "{}/auth/spotify/callback",
+        state.overlay_url.trim_end_matches('/')
+    );
+    let pending = crate::integration::SpotifyPending {
+        state: state_token.clone(),
+        verifier: verifier.clone(),
+        client_id: client_id.clone(),
+        redirect_uri: redirect_uri.clone(),
+        created_at: crate::integration::now_seconds(),
+    };
+    if let Ok(mut current) = state.integration.spotify_pending.lock() {
+        *current = Some(pending);
+    }
+    state.integration.status.write().await.spotify_status = "waiting_for_authorization".to_owned();
+    Ok(Json(SpotifyStartResponse {
+        authorization_url: SpotifyApi::authorization_url(
+            &client_id,
+            &redirect_uri,
+            &state_token,
+            &verifier,
+        ),
+    }))
+}
+
+async fn spotify_callback(
+    State(state): State<AppState>,
+    Query(query): Query<SpotifyCallbackQuery>,
+) -> axum::response::Html<String> {
+    if let Some(error) = query.error {
+        return oauth_result_page(&format!("Spotify authorization failed: {error}"), true);
+    }
+    let Some(code) = query.code else {
+        return oauth_result_page("Spotify did not return an authorization code.", true);
+    };
+    let Some(returned_state) = query.state else {
+        return oauth_result_page("Spotify authorization state was missing.", true);
+    };
+    let pending = state
+        .integration
+        .spotify_pending
+        .lock()
+        .ok()
+        .and_then(|mut value| value.take());
+    let Some(pending) = pending else {
+        return oauth_result_page(
+            "Spotify authorization expired. Start again from setup.",
+            true,
+        );
+    };
+    if pending.state != returned_state
+        || crate::integration::now_seconds().saturating_sub(pending.created_at) > 600
+    {
+        return oauth_result_page("Spotify authorization state was invalid or expired.", true);
+    }
+    match SpotifyApi::new()
+        .exchange_code(
+            &pending.client_id,
+            &code,
+            &pending.redirect_uri,
+            &pending.verifier,
+        )
+        .await
+    {
+        Ok(token) => match state.integration.credentials.load() {
+            Ok(mut credentials) => {
+                credentials.spotify = Some(token);
+                match state.integration.credentials.save(&credentials) {
+                    Ok(()) => {
+                        let mut status = state.integration.status.write().await;
+                        status.spotify_connected = true;
+                        status.spotify_status = "authorized".to_owned();
+                        status.last_error = None;
+                        state.integration.signal_change();
+                        oauth_result_page(
+                            "Spotify connected. You can close this tab and return to setup.",
+                            false,
+                        )
+                    }
+                    Err(error) => oauth_result_page(
+                        &format!("Could not store Spotify credentials: {error}"),
+                        true,
+                    ),
+                }
+            }
+            Err(error) => {
+                oauth_result_page(&format!("Could not load credential storage: {error}"), true)
+            }
+        },
+        Err(error) => oauth_result_page(&format!("Spotify authorization failed: {error}"), true),
+    }
+}
+
+async fn disconnect_spotify(
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    ensure_setup_request(peer, &headers, &state)?;
+    state
+        .integration
+        .credentials
+        .clear_spotify()
+        .map_err(storage_error)?;
+    let mut status = state.integration.status.write().await;
+    status.spotify_connected = false;
+    status.spotify_status = "disconnected".to_owned();
+    state.integration.signal_change();
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn set_twitch_device_error(state: &crate::integration::IntegrationState, error: &str) {
+    if let Ok(mut device) = state.twitch_device.lock() {
+        *device = Some(TwitchDeviceStatus {
+            state: "error".to_owned(),
+            error: Some(error.to_owned()),
+            ..Default::default()
+        });
+    }
+    let mut status = state.status.write().await;
+    status.twitch_connected = false;
+    status.twitch_status = format!("error: {error}");
+    status.last_error = Some(error.to_owned());
+    state.signal_change();
+}
+
+fn ensure_setup_request(
+    peer: SocketAddr,
+    headers: &HeaderMap,
+    state: &AppState,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    if !peer.ip().is_loopback() {
+        return Err(error_response(
+            StatusCode::FORBIDDEN,
+            "Setup is available only from this computer.",
+        ));
+    }
+    let csrf_valid = headers
+        .get("x-spotify-overlay-csrf")
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|value| value == state.integration.csrf_token);
+    if !csrf_valid {
+        return Err(error_response(
+            StatusCode::FORBIDDEN,
+            "The setup page session expired. Reload it and try again.",
+        ));
+    }
+    let host_valid = headers
+        .get(header::HOST)
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|value| {
+            value.starts_with("127.0.0.1:")
+                || value.starts_with("localhost:")
+                || value.starts_with("[::1]:")
+        });
+    if !host_valid {
+        return Err(error_response(
+            StatusCode::FORBIDDEN,
+            "Invalid local setup host.",
+        ));
+    }
+    if let Some(origin) = headers
+        .get(header::ORIGIN)
+        .and_then(|value| value.to_str().ok())
+    {
+        if !(origin.starts_with("http://127.0.0.1:")
+            || origin.starts_with("http://localhost:")
+            || origin.starts_with("http://[::1]:"))
+        {
+            return Err(error_response(
+                StatusCode::FORBIDDEN,
+                "Invalid setup origin.",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn config_error(error: crate::config::ConfigError) -> (StatusCode, Json<ErrorResponse>) {
+    error_response(StatusCode::BAD_REQUEST, &error.to_string())
+}
+
+fn storage_error(error: CredentialError) -> (StatusCode, Json<ErrorResponse>) {
+    error_response(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string())
+}
+
+fn twitch_error(error: crate::integration::TwitchError) -> (StatusCode, Json<ErrorResponse>) {
+    error_response(StatusCode::BAD_GATEWAY, &error.to_string())
+}
+
+fn error_response(status: StatusCode, message: &str) -> (StatusCode, Json<ErrorResponse>) {
+    (
+        status,
+        Json(ErrorResponse {
+            error: message.to_owned(),
+        }),
+    )
+}
+
+fn oauth_result_page(message: &str, error: bool) -> axum::response::Html<String> {
+    let color = if error { "#f09b9b" } else { "#9bd5a6" };
+    axum::response::Html(format!("<!doctype html><meta charset=\"utf-8\"><title>Spotify Overlay</title><body style=\"background:#111214;color:#f0ddd1;font:16px Segoe UI,Arial;padding:32px\"><p style=\"color:{color}\">{}</p><a href=\"/setup\" style=\"color:#e7bf9c\">Return to setup</a></body>", html_escape(message)))
+}
+
+fn html_escape(value: &str) -> String {
+    value
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
 }
 
 async fn artwork(State(state): State<AppState>) -> Response {

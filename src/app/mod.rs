@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::integration::IntegrationState;
 use crate::media::{ArtworkStore, MediaState};
 use crate::server::{self, AppState};
 
@@ -17,6 +18,7 @@ pub async fn run(config: Config) -> Result<(), AppError> {
     let artwork = ArtworkStore::new();
     let (state_tx, state_rx) = tokio::sync::watch::channel(MediaState::unavailable(0));
     let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
+    let (config_tx, _config_rx) = tokio::sync::watch::channel(config.clone());
 
     let _media_thread = crate::media::spawn_monitor(
         state_tx,
@@ -30,9 +32,18 @@ pub async fn run(config: Config) -> Result<(), AppError> {
         _ => config.bind_address.clone(),
     };
     let overlay_url = format!("http://{overlay_host}:{}/", config.port);
-    let _tray_thread = crate::tray::spawn(overlay_url, shutdown_tx.clone());
+    let setup_url = format!("{overlay_url}setup");
+    let _tray_thread = crate::tray::spawn(overlay_url.clone(), setup_url, shutdown_tx.clone());
 
-    let server_state = AppState::new(state_rx, artwork, shutdown_tx);
+    let server_state = AppState::new(
+        state_rx,
+        artwork,
+        shutdown_tx,
+        config_tx,
+        IntegrationState::new(),
+        overlay_url,
+    );
+    let _chat_task = crate::chat::spawn(server_state.clone());
     server::run(&config, server_state, shutdown_rx).await?;
 
     Ok(())

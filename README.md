@@ -6,7 +6,7 @@
 Spotify Desktop → Windows GSMTC events → Rust agent → localhost WebSocket → OBS
 ```
 
-There is no Spotify Web API, OAuth, cloud service, database, browser extension, OBS plugin, or Spotify window scraping.
+The optional chat/request integration uses Twitch EventSub and the Spotify Web API only after you explicitly connect both accounts in the local setup page. The OBS overlay itself still uses Windows media events and does not require OAuth.
 
 ## What it does
 
@@ -18,6 +18,8 @@ There is no Spotify Web API, OAuth, cloud service, database, browser extension, 
 - Smoothly loops long track titles with a duplicated marquee track, pausing briefly at both ends without shrinking the text.
 - Serves the overlay, health endpoint, artwork, and WebSocket from `127.0.0.1:18923`.
 - Reconnects the OBS page with bounded exponential backoff when the native process restarts.
+- Optionally connects a dedicated Twitch bot account locally and answers current-song commands.
+- Optionally resolves Spotify track requests and adds them to the active Spotify playback queue.
 
 The default overlay is a clean 650 × 250 broadcast layout: a floating square album cover, a single-line cream title, and a muted artist line on a compact rounded card. The card automatically derives a stable, darkened dominant color from the current artwork while the page around it stays transparent.
 
@@ -56,6 +58,26 @@ Fatal startup errors also appear in a Windows message box instead of failing sil
 To start it automatically with Windows, press **Win+R**, open `shell:startup`, and place a shortcut to `spotify-overlay.exe` in that folder.
 
 The overlay hides itself when Spotify has no usable media metadata. When Spotify pauses, the card remains visible.
+
+## Optional Twitch commands and Spotify requests
+
+Right-click the notification-area icon and choose **Setup Twitch & Spotify**, or open [http://127.0.0.1:18923/setup](http://127.0.0.1:18923/setup). The setup page is local to the streaming PC.
+
+1. Create your own Twitch application configured for Device Code flow and enter its Client ID.
+2. Enter the Twitch channel name and authorize the separate bot account.
+3. Make that bot account a moderator in the channel.
+4. Create your own Spotify developer app, enter its Client ID, and add the displayed local callback URI to its redirect allowlist.
+5. Authorize the Spotify account that is playing the stream music.
+6. Enable Twitch commands and save.
+
+The default commands are:
+
+- `!song` or `!playingnow` — reports the current Windows media-session track.
+- `!sr <song title, Spotify URL, or Spotify URI>` or `!songrequest ...` — searches Spotify and adds the selected track to Spotify’s native queue.
+
+Command aliases, minimum role, and per-viewer/global cooldowns are configurable on the setup page. Requests require Spotify Premium and an active Spotify playback device. The app does not provide an editable queue or remove/reorder tracks already handed to Spotify.
+
+Each streamer supplies their own Twitch and Spotify Client IDs. The app stores non-sensitive settings under `%LOCALAPPDATA%\SpotifyOverlay` and protects OAuth tokens with Windows DPAPI. No public relay or Nightbot URL is required; Nightbot cannot reach the local `127.0.0.1` service.
 
 ## Development
 
