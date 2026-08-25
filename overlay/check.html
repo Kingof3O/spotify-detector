@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spotify Overlay Health Check</title>
+    <style>
+      :root { color-scheme: dark; font-family: "Segoe UI", Arial, sans-serif; }
+      body { margin: 0; background: #111214; color: #f0ddd1; }
+      main { width: min(820px, calc(100% - 32px)); margin: 24px auto; }
+      h1 { margin: 0 0 6px; font-size: 28px; }
+      p { color: #c9b6b2; }
+      .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 18px 0; }
+      button, a { padding: 9px 13px; border: 0; border-radius: 8px; background: #a86e92; color: #fff; cursor: pointer; text-decoration: none; }
+      a { background: #51474a; }
+      #summary { margin: 12px 0; padding: 13px 16px; border-radius: 10px; font-weight: 600; }
+      .summary-ok, .ok { background: #193c29; color: #b5e5bf; }
+      .summary-warning, .warning { background: #4a391d; color: #f2d69f; }
+      .summary-error, .error { background: #4b2429; color: #f2b2b5; }
+      .check { display: grid; grid-template-columns: 190px 110px 1fr; gap: 12px; align-items: start; margin: 8px 0; padding: 12px 14px; border: 1px solid #3c3638; border-radius: 10px; background: #211d20; }
+      .check strong { color: #f0ddd1; }
+      .check .state { font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: .06em; }
+      .detail { color: #d4c1bd; }
+      .action { display: block; margin-top: 5px; color: #efc1a4; }
+      @media (max-width: 650px) { .check { grid-template-columns: 1fr 90px; } .detail { grid-column: 1 / -1; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Spotify Overlay Health Check</h1>
+      <p>Local diagnostics for OBS, Windows media detection, Twitch chat, and Spotify requests.</p>
+      <div class="toolbar"><button id="refresh">Refresh live checks</button><a href="/setup">Open setup</a><span id="updated"></span></div>
+      <div id="summary">Checking…</div>
+      <div id="checks"></div>
+    </main>
+    <script>
+      (() => {
+        const summary = document.getElementById("summary");
+        const checks = document.getElementById("checks");
+        const updated = document.getElementById("updated");
+        const escape = (value) => String(value ?? "").replace(/[&<>\"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[character]));
+        async function refresh() {
+          summary.textContent = "Running checks…";
+          try {
+            const response = await fetch("/api/health/check?live=1", { cache: "no-store" });
+            const report = await response.json();
+            summary.className = `summary-${report.overall}`;
+            summary.textContent = report.summary;
+            checks.innerHTML = report.checks.map((check) => `<article class="check"><strong>${escape(check.name)}</strong><span class="state ${escape(check.status)}">${escape(check.status)}</span><div class="detail">${escape(check.detail)}${check.action ? `<span class="action">Next: ${escape(check.action)}</span>` : ""}</div></article>`).join("");
+            updated.textContent = `Checked ${new Date(report.checked_at * 1000).toLocaleTimeString()}`;
+          } catch (error) {
+            summary.className = "summary-error";
+            summary.textContent = `Health check failed: ${error.message}`;
+            checks.innerHTML = "";
+          }
+        }
+        document.getElementById("refresh").addEventListener("click", refresh);
+        refresh();
+      })();
+    </script>
+  </body>
+</html>

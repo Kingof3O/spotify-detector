@@ -162,6 +162,28 @@ impl TwitchApi {
             ))
     }
 
+    pub async fn validate(&self, access_token: &str) -> Result<TwitchUser, TwitchError> {
+        let response = self
+            .client
+            .get(format!("{OAUTH_BASE}/validate"))
+            .bearer_auth(access_token)
+            .send()
+            .await
+            .map_err(TwitchError::Network)?;
+        if !response.status().is_success() {
+            return Err(map_error(response).await);
+        }
+        let body = response
+            .json::<ValidateResponse>()
+            .await
+            .map_err(TwitchError::Network)?;
+        Ok(TwitchUser {
+            id: body.user_id,
+            login: body.login.clone(),
+            display_name: body.login,
+        })
+    }
+
     pub async fn broadcaster_id(
         &self,
         access_token: &str,
@@ -301,6 +323,12 @@ struct TokenResponse {
 #[derive(Deserialize)]
 struct OAuthError {
     message: String,
+}
+
+#[derive(Deserialize)]
+struct ValidateResponse {
+    user_id: String,
+    login: String,
 }
 
 async fn map_error(response: reqwest::Response) -> TwitchError {

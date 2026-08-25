@@ -53,7 +53,7 @@ impl SpotifyApi {
         verifier: &str,
     ) -> String {
         let challenge = Self::pkce_challenge(verifier);
-        let scope = "user-modify-playback-state";
+        let scope = "user-modify-playback-state user-read-playback-state";
         let query = [
             ("response_type", "code"),
             ("client_id", client_id),
@@ -159,6 +159,31 @@ impl SpotifyApi {
         }
     }
 
+    pub async fn playback_status(
+        &self,
+        state: &IntegrationState,
+        client_id: &str,
+    ) -> Result<PlaybackStatus, SpotifyError> {
+        let request = self.client.get(format!("{API_BASE}/me/player"));
+        let response = self
+            .send_authenticated(state, client_id, request, false)
+            .await?;
+        if response.status() == StatusCode::NO_CONTENT {
+            return Ok(PlaybackStatus::NoActiveDevice);
+        }
+        let body = response
+            .json::<PlaybackStateResponse>()
+            .await
+            .map_err(SpotifyError::Network)?;
+        let Some(device) = body.device else {
+            return Ok(PlaybackStatus::NoActiveDevice);
+        };
+        Ok(PlaybackStatus::Active {
+            name: device.name,
+            playing: body.is_playing,
+        })
+    }
+
     async fn send_authenticated(
         &self,
         state: &IntegrationState,
@@ -254,6 +279,12 @@ pub struct SpotifyTrack {
     pub artist: String,
 }
 
+#[derive(Clone, Debug)]
+pub enum PlaybackStatus {
+    Active { name: String, playing: bool },
+    NoActiveDevice,
+}
+
 impl From<TrackResponse> for SpotifyTrack {
     fn from(track: TrackResponse) -> Self {
         Self {
@@ -288,6 +319,18 @@ struct TrackResponse {
 
 #[derive(Deserialize)]
 struct ArtistResponse {
+    name: String,
+}
+
+#[derive(Deserialize)]
+struct PlaybackStateResponse {
+    #[serde(default)]
+    is_playing: bool,
+    device: Option<PlaybackDevice>,
+}
+
+#[derive(Deserialize)]
+struct PlaybackDevice {
     name: String,
 }
 

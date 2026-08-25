@@ -12,7 +12,8 @@ use std::net::SocketAddr;
 use crate::{
     config::{ChatConfig, Config},
     integration::{
-        CredentialError, DevicePoll, IntegrationStatus, SpotifyApi, TwitchApi, TwitchDeviceStatus,
+        CredentialError, DevicePoll, IntegrationStatus, PlaybackStatus, SpotifyApi, SpotifyError,
+        TwitchApi, TwitchDeviceStatus, TwitchError,
     },
 };
 
@@ -22,6 +23,7 @@ const INDEX_HTML: &str = include_str!("../../overlay/index.html");
 const TEST_HTML: &str = include_str!("../../overlay/test.html");
 const TEST_ARTWORK_SVG: &str = include_str!("../../overlay/test-artwork.svg");
 const SETUP_HTML: &str = include_str!("../../overlay/setup.html");
+const CHECK_HTML: &str = include_str!("../../overlay/check.html");
 const OVERLAY_CSS: &str = include_str!("../../overlay/overlay.css");
 const OVERLAY_JS: &str = include_str!("../../overlay/overlay.js");
 
@@ -30,10 +32,12 @@ pub fn router(state: AppState) -> Router {
         .route("/", get(index))
         .route("/test", get(test))
         .route("/setup", get(setup))
+        .route("/check", get(check))
         .route("/test-artwork.svg", get(test_artwork))
         .route("/overlay.css", get(overlay_css))
         .route("/overlay.js", get(overlay_js))
         .route("/health", get(health))
+        .route("/api/health/check", get(health_check))
         .route("/api/setup/status", get(setup_status))
         .route("/api/setup/settings", put(save_settings))
         .route("/api/auth/twitch/start", post(start_twitch_auth))
@@ -58,6 +62,10 @@ async fn test() -> axum::response::Html<&'static str> {
 
 async fn setup() -> axum::response::Html<&'static str> {
     axum::response::Html(SETUP_HTML)
+}
+
+async fn check() -> axum::response::Html<&'static str> {
+    axum::response::Html(CHECK_HTML)
 }
 
 async fn test_artwork() -> impl IntoResponse {
@@ -110,6 +118,313 @@ async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
         available: current.available,
         source: current.source,
     })
+}
+
+#[derive(Deserialize)]
+struct HealthQuery {
+    live: Option<u8>,
+}
+
+#[derive(Serialize)]
+struct HealthCheckReport {
+    version: &'static str,
+    overall: &'static str,
+    summary: String,
+    checked_at: u64,
+    checks: Vec<HealthCheckItem>,
+}
+
+#[derive(Serialize)]
+struct HealthCheckItem {
+    name: String,
+    status: &'static str,
+    detail: String,
+    action: Option<String>,
+}
+
+async fn health_check(
+    State(state): State<AppState>,
+    Query(query): Query<HealthQuery>,
+) -> Json<HealthCheckReport> {
+    let live = query.live == Some(1);
+    let config = state.config_snapshot();
+    let current = state.media.borrow().clone();
+    let mut checks = Vec::new();
+
+    add_check(
+        &mut checks,
+        "Local server",
+        "ok",
+        format!(
+            "Version {} is serving localhost:{}. ",
+            env!("CARGO_PKG_VERSION"),
+            config.port
+        )
+        .trim()
+        .to_owned(),
+        None,
+    );
+    if current.available {
+        let title = current.title.as_deref().unwrap_or("Unknown track");
+        add_check(
+            &mut checks,
+            "Media session",
+            "ok",
+            format!(
+                "Detected {}: {}.",
+                current.source.as_deref().unwrap_or("media"),
+                title
+            ),
+            None,
+        );
+    } else {
+        add_check(
+            &mut checks,
+            "Media session",
+            "warning",
+            "No usable Windows media metadata is currently available.".to_owned(),
+            Some("Start a Spotify track before testing !song.".to_owned()),
+        );
+    }
+
+    let credentials = state.integration.credentials.load();
+    match credentials {
+        Ok(credentials) => {
+            let twitch_client_id = !config.integrations.twitch_client_id.trim().is_empty();
+            let twitch_channel = !config.integrations.twitch_channel.trim().is_empty();
+            if twitch_client_id && twitch_channel {
+                add_check(
+                    &mut checks,
+                    "Twitch configuration",
+                    "ok",
+                    format!(
+                        "Client ID and channel @{} are configured.",
+                        config.integrations.twitch_channel
+                    ),
+                    None,
+                );
+            } else {
+                add_check(
+                    &mut checks,
+                    "Twitch configuration",
+                    "error",
+                    "Twitch Client ID or target channel is missing.".to_owned(),
+                    Some("Open setup and save both Twitch fields.".to_owned()),
+                );
+            }
+
+            match credentials.twitch {
+                Some(token) if live => match TwitchApi::new().validate(&token.access_token).await {
+                    Ok(user) => add_check(
+                        &mut checks,
+                        "Twitch authorization",
+                        "ok",
+                        format!("Authorized as {}.", user.display_name),
+                        None,
+                    ),
+                    Err(error) => add_check(
+                        &mut checks,
+                        "Twitch authorization",
+                        "error",
+                        twitch_health_error(&error),
+                        Some("Reconnect the Twitch bot from setup.".to_owned()),
+                    ),
+                },
+                Some(token) => add_check(
+                    &mut checks,
+                    "Twitch authorization",
+                    "ok",
+                    format!("Saved authorization for {}.", token.display_name),
+                    None,
+                ),
+                None => add_check(
+                    &mut checks,
+                    "Twitch authorization",
+                    "error",
+                    "No Twitch bot authorization is stored.".to_owned(),
+                    Some("Authorize the bot account from setup.".to_owned()),
+                ),
+            }
+
+            if !config.integrations.chat.enabled {
+                add_check(
+                    &mut checks,
+                    "Twitch chat listener",
+                    "warning",
+                    "Twitch commands are disabled in settings.".to_owned(),
+                    Some("Enable Twitch commands and save settings.".to_owned()),
+                );
+            } else {
+                let status = state.integration.status.read().await.clone();
+                if status.twitch_connected {
+                    add_check(
+                        &mut checks,
+                        "Twitch chat listener",
+                        "ok",
+                        format!(
+                            "EventSub is connected as {}.",
+                            status.twitch_user.unwrap_or_else(|| "bot".to_owned())
+                        ),
+                        None,
+                    );
+                } else if status.twitch_status.starts_with("error") {
+                    add_check(
+                        &mut checks,
+                        "Twitch chat listener",
+                        "error",
+                        status.twitch_status,
+                        Some(
+                            "Check the error, then reconnect or make the bot a channel moderator."
+                                .to_owned(),
+                        ),
+                    );
+                } else {
+                    add_check(
+                        &mut checks,
+                        "Twitch chat listener",
+                        "warning",
+                        format!(
+                            "Listener status: {}.",
+                            if status.twitch_status.is_empty() {
+                                "starting"
+                            } else {
+                                &status.twitch_status
+                            }
+                        ),
+                        Some("Wait a few seconds and refresh this page.".to_owned()),
+                    );
+                }
+            }
+
+            if config.integrations.spotify_client_id.trim().is_empty() {
+                add_check(
+                    &mut checks,
+                    "Spotify configuration",
+                    "error",
+                    "Spotify Client ID is missing.".to_owned(),
+                    Some("Enter and save the Spotify Client ID in setup.".to_owned()),
+                );
+            } else {
+                add_check(
+                    &mut checks,
+                    "Spotify configuration",
+                    "ok",
+                    "Spotify Client ID is configured.".to_owned(),
+                    None,
+                );
+            }
+
+            match credentials.spotify {
+                Some(_) if live => match SpotifyApi::new()
+                    .playback_status(&state.integration, &config.integrations.spotify_client_id)
+                    .await
+                {
+                    Ok(PlaybackStatus::Active { name, playing }) => add_check(
+                        &mut checks,
+                        "Spotify playback device",
+                        "ok",
+                        format!("Active device: {name} ({}).", if playing { "playing" } else { "paused" }),
+                        None,
+                    ),
+                    Ok(PlaybackStatus::NoActiveDevice) => add_check(
+                        &mut checks,
+                        "Spotify playback device",
+                        "warning",
+                        "Spotify authorization works, but no active playback device was found.".to_owned(),
+                        Some("Open Spotify Desktop and start playback.".to_owned()),
+                    ),
+                    Err(error) => add_check(
+                        &mut checks,
+                        "Spotify playback device",
+                        "error",
+                        spotify_health_error(&error),
+                        Some("Reconnect Spotify to grant playback-read permission.".to_owned()),
+                    ),
+                },
+                Some(_) => add_check(
+                    &mut checks,
+                    "Spotify authorization",
+                    "ok",
+                    "Spotify authorization is stored. Run a live check to test the playback device.".to_owned(),
+                    None,
+                ),
+                None => add_check(
+                    &mut checks,
+                    "Spotify authorization",
+                    "error",
+                    "No Spotify authorization is stored.".to_owned(),
+                    Some("Authorize Spotify from setup.".to_owned()),
+                ),
+            }
+        }
+        Err(error) => add_check(
+            &mut checks,
+            "Credential storage",
+            "error",
+            format!("Could not read protected credentials: {error}."),
+            Some("Restart the app and reconnect the accounts.".to_owned()),
+        ),
+    }
+
+    let overall = if checks.iter().any(|check| check.status == "error") {
+        "error"
+    } else if checks.iter().any(|check| check.status == "warning") {
+        "warning"
+    } else {
+        "ok"
+    };
+    let summary = match overall {
+        "ok" => "All health checks passed.".to_owned(),
+        "warning" => "The app is running, but one or more checks need attention.".to_owned(),
+        _ => "One or more required checks failed.".to_owned(),
+    };
+    Json(HealthCheckReport {
+        version: env!("CARGO_PKG_VERSION"),
+        overall,
+        summary,
+        checked_at: crate::integration::now_seconds(),
+        checks,
+    })
+}
+
+fn add_check(
+    checks: &mut Vec<HealthCheckItem>,
+    name: &str,
+    status: &'static str,
+    detail: String,
+    action: Option<String>,
+) {
+    checks.push(HealthCheckItem {
+        name: name.to_owned(),
+        status,
+        detail,
+        action,
+    });
+}
+
+fn twitch_health_error(error: &TwitchError) -> String {
+    match error {
+        TwitchError::Api(status, _) => {
+            format!("Twitch returned HTTP {status} while validating the bot.")
+        }
+        TwitchError::Authentication(message) => message.clone(),
+        TwitchError::InvalidChannel(channel) => format!("Twitch channel @{channel} was not found."),
+        TwitchError::Network(_) => "Twitch could not be reached.".to_owned(),
+    }
+}
+
+fn spotify_health_error(error: &SpotifyError) -> String {
+    match error {
+        SpotifyError::Forbidden(_) => {
+            "Spotify denied playback-state access; the stored token may need reconnecting."
+                .to_owned()
+        }
+        SpotifyError::Authentication(_) => "Spotify authorization expired.".to_owned(),
+        SpotifyError::NotConnected => "Spotify is not authorized.".to_owned(),
+        SpotifyError::RateLimited(_) => "Spotify rate-limited the live check.".to_owned(),
+        SpotifyError::Network(_) => "Spotify could not be reached.".to_owned(),
+        _ => format!("Spotify live check failed: {error}."),
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

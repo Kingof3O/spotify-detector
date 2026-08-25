@@ -31,6 +31,7 @@
     <main>
       <h1>Twitch &amp; Spotify setup</h1>
       <p>This page stays local on this computer. The OBS overlay works without connecting either account.</p>
+      <p><a class="button" href="/check">Open health check</a></p>
       <div id="message"></div>
 
       <section>
@@ -50,7 +51,7 @@
         <p id="spotify-status" class="status">Not connected</p>
         <button id="spotify-connect">Authorize Spotify</button>
         <button id="spotify-disconnect" class="secondary">Disconnect</button>
-        <small>Use a Spotify app with this redirect URI: <code id="redirect-uri"></code></small>
+        <small>Use a Spotify app with this redirect URI: <code id="redirect-uri"></code>. Reconnect after an app permission change.</small>
       </section>
 
       <section>

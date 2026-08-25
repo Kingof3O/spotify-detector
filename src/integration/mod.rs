@@ -13,7 +13,7 @@ use serde::Serialize;
 use tokio::sync::{Notify, RwLock};
 
 pub use credentials::{CredentialError, CredentialStore, SpotifyToken, TwitchToken};
-pub use spotify::{SpotifyApi, SpotifyError};
+pub use spotify::{PlaybackStatus, SpotifyApi, SpotifyError};
 pub use twitch::{DevicePoll, TwitchApi, TwitchError};
 
 #[derive(Clone)]
