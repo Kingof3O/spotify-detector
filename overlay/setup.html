@@ -104,6 +104,8 @@
           setStatus($("twitch-status"), data.status.twitch_connected ? `Connected as ${data.status.twitch_user || "bot"}` : (data.status.twitch_status || "Not connected"), !data.status.twitch_connected && data.status.twitch_status.startsWith("error"));
           setStatus($("spotify-status"), data.status.spotify_connected ? "Connected" : (data.status.spotify_status || "Not connected"), !data.status.spotify_connected && data.status.spotify_status.startsWith("error"));
           if (data.twitch_device && data.twitch_device.state === "pending") $("twitch-device").textContent = `Authorize at ${data.twitch_device.verification_uri} with code ${data.twitch_device.user_code}.`;
+          if (data.status.last_error) message(`Connection error: ${data.status.last_error}`, true);
+          else if (data.status.twitch_status === "disabled") setStatus($("twitch-status"), "Commands are disabled — enable them below and save.");
         }
         async function load(initial = false) { try { fillStatus(await api("/api/setup/status"), initial); } catch (error) { message(error.message, true); } }
         ["twitch-client-id", "twitch-channel", "spotify-client-id", "chat-enabled", "requests-enabled", "current-song-commands", "request-commands", "request-role", "user-cooldown", "global-cooldown"].forEach((id) => {

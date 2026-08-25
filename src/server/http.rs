@@ -173,8 +173,15 @@ async fn setup_status(State(state): State<AppState>) -> Json<SetupStatusResponse
     let config = state.config_snapshot();
     let mut status = state.integration.status.read().await.clone();
     if let Ok(credentials) = state.integration.credentials.load() {
-        status.twitch_connected = credentials.twitch.is_some();
-        status.twitch_user = credentials.twitch.map(|token| token.display_name);
+        if credentials.twitch.is_none() {
+            status.twitch_connected = false;
+            status.twitch_user = None;
+            if !status.twitch_status.starts_with("error") {
+                status.twitch_status = "not_authorized".to_owned();
+            }
+        } else if status.twitch_status.is_empty() {
+            status.twitch_status = "authorized_waiting_for_chat".to_owned();
+        }
         status.spotify_connected = credentials.spotify.is_some();
     }
     let twitch_device = state

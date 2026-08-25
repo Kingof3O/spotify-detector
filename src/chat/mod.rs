@@ -64,13 +64,6 @@ async fn supervisor(state: AppState) {
             reconnect_delay = Duration::from_secs(2);
             continue;
         }
-        if credentials.spotify.is_none() {
-            set_chat_status(&state.integration, false, None, "spotify_not_connected").await;
-            wait_for_change(&state.integration, &mut config_rx).await;
-            reconnect_delay = Duration::from_secs(2);
-            continue;
-        }
-
         match run_session(
             &state,
             &config,
@@ -121,10 +114,9 @@ async fn run_session(
 ) -> SessionResult {
     let client_id = config.integrations.twitch_client_id.trim();
     let channel = config.integrations.twitch_channel.trim();
-    let spotify_client_id = config.integrations.spotify_client_id.trim();
-    if client_id.is_empty() || channel.is_empty() || spotify_client_id.is_empty() {
+    if client_id.is_empty() || channel.is_empty() {
         return SessionResult::Stopped(Some(
-            "Twitch channel, Twitch Client ID, and Spotify Client ID are required".to_owned(),
+            "Twitch channel and Twitch Client ID are required".to_owned(),
         ));
     }
 
