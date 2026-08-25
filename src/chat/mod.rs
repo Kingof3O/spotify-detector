@@ -185,30 +185,51 @@ async fn run_socket(
     broadcaster_id: &str,
     transferred_subscriptions: bool,
 ) -> SocketResult {
-    let welcome = timeout(Duration::from_secs(20), socket.next()).await;
-    let welcome = match welcome {
-        Ok(Some(Ok(Message::Text(text)))) => text,
-        Ok(Some(Ok(_))) => {
-            return SocketResult::Stopped(Some(
-                "Twitch sent an invalid EventSub welcome".to_owned(),
-            ))
-        }
-        Ok(Some(Err(error))) => {
-            return SocketResult::Stopped(Some(format!("Twitch EventSub read: {error}")))
-        }
-        Ok(None) => {
-            return SocketResult::Stopped(Some("Twitch EventSub closed before welcome".to_owned()))
-        }
-        Err(_) => {
-            return SocketResult::Stopped(Some("Twitch EventSub welcome timed out".to_owned()))
+    let welcome = loop {
+        let incoming = timeout(Duration::from_secs(20), socket.next()).await;
+        match incoming {
+            Ok(Some(Ok(Message::Text(text)))) => break text.to_string(),
+            Ok(Some(Ok(Message::Binary(bytes)))) => match String::from_utf8(bytes.to_vec()) {
+                Ok(text) => break text,
+                Err(_) => {
+                    return SocketResult::Stopped(Some(
+                        "Twitch sent a non-UTF-8 EventSub welcome".to_owned(),
+                    ))
+                }
+            },
+            Ok(Some(Ok(Message::Ping(payload)))) => {
+                if socket.send(Message::Pong(payload)).await.is_err() {
+                    return SocketResult::Stopped(Some(
+                        "Twitch EventSub welcome ping failed".to_owned(),
+                    ));
+                }
+            }
+            Ok(Some(Ok(Message::Pong(_))) | Some(Ok(Message::Frame(_)))) => {}
+            Ok(Some(Ok(Message::Close(_))) | None) => {
+                return SocketResult::Stopped(Some(
+                    "Twitch EventSub closed before welcome".to_owned(),
+                ))
+            }
+            Ok(Some(Err(error))) => {
+                return SocketResult::Stopped(Some(format!("Twitch EventSub read: {error}")))
+            }
+            Err(_) => {
+                return SocketResult::Stopped(Some("Twitch EventSub welcome timed out".to_owned()))
+            }
         }
     };
     let welcome: EventSubEnvelope = match serde_json::from_str::<EventSubEnvelope>(&welcome) {
         Ok(value) if value.metadata.message_type == "session_welcome" => value,
-        _ => {
-            return SocketResult::Stopped(Some(
-                "Twitch EventSub did not send a welcome message".to_owned(),
-            ))
+        Ok(value) => {
+            return SocketResult::Stopped(Some(format!(
+                "Twitch EventSub sent message type '{}' instead of session_welcome",
+                value.metadata.message_type
+            )))
+        }
+        Err(error) => {
+            return SocketResult::Stopped(Some(format!(
+                "Twitch EventSub welcome was not valid JSON: {error}"
+            )))
         }
     };
     let session_id = welcome
@@ -831,6 +852,18 @@ mod tests {
         assert_eq!(
             envelope.metadata.subscription_type,
             Some("channel.chat.message".to_owned())
+        );
+    }
+
+    #[test]
+    fn eventsub_welcome_fixture_has_session_id() {
+        let envelope: EventSubEnvelope = serde_json::from_str(
+            r#"{"metadata":{"message_type":"session_welcome"},"payload":{"session":{"id":"session-123","reconnect_url":null}}}"#,
+        )
+        .expect("welcome parses");
+        assert_eq!(
+            envelope.payload.session.and_then(|session| session.id),
+            Some("session-123".to_owned())
         );
     }
 }
