@@ -4,189 +4,368 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spotify Overlay Setup</title>
-    <style>
-      :root { color-scheme: dark; font-family: "Segoe UI", Inter, Arial, sans-serif; --ink: #f8f3ff; --muted: #b8aecb; --line: rgba(255,255,255,.14); --glass: rgba(20, 15, 38, .64); --purple: #b66cff; --pink: #ff75c8; }
-      * { box-sizing: border-box; }
-      body { min-height: 100vh; margin: 0; overflow-x: hidden; color: var(--ink); background: #080711; background-image: radial-gradient(900px 540px at -8% -12%, rgba(145, 70, 255, .42), transparent 65%), radial-gradient(700px 500px at 108% 4%, rgba(255, 67, 181, .22), transparent 62%), radial-gradient(620px 520px at 50% 115%, rgba(57, 89, 255, .19), transparent 68%); }
-      body::before, body::after { position: fixed; z-index: -1; width: 280px; height: 280px; border-radius: 50%; content: ""; filter: blur(70px); opacity: .34; pointer-events: none; }
-      body::before { top: 28%; left: -130px; background: #6c38ff; }
-      body::after { right: -120px; bottom: 12%; background: #d638ae; }
-      main { width: min(900px, calc(100% - 32px)); margin: 0 auto; padding: 34px 0 64px; }
-      .hero { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-      .hero-mark { display: grid; width: 58px; height: 58px; place-items: center; border: 1px solid rgba(255,255,255,.25); border-radius: 18px; background: linear-gradient(135deg, rgba(187,107,255,.8), rgba(255,100,191,.5)); box-shadow: 0 14px 38px rgba(126, 51, 255, .32), inset 0 1px rgba(255,255,255,.42); font-size: 30px; }
-      .eyebrow { margin-bottom: 5px; color: #c49aff; font-size: 11px; font-weight: 800; letter-spacing: .18em; }
-      h1 { margin: 0; background: linear-gradient(90deg, #fff, #e3c5ff 52%, #ffb5e3); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: clamp(28px, 4vw, 40px); line-height: 1.05; }
-      h2 { margin: 0 0 16px; color: #fff; font-size: 19px; }
-      p, small { color: var(--muted); }
-      .hero p { margin: 8px 0 0; font-size: 14px; }
-      section { position: relative; margin: 16px 0; padding: 22px; border: 1px solid var(--line); border-radius: 20px; background: linear-gradient(145deg, rgba(39, 25, 69, .72), rgba(17, 13, 31, .55)); box-shadow: 0 22px 55px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.09); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
-      section::before { position: absolute; top: 0; right: 22px; left: 22px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent); content: ""; }
-      label { display: block; margin: 12px 0; color: #e7ddf5; font-size: 14px; }
-      input, select, textarea { display: block; width: 100%; margin-top: 7px; padding: 11px 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 11px; outline: none; background: rgba(5, 4, 14, .58); color: #fff; font: inherit; box-shadow: inset 0 1px rgba(255,255,255,.04); transition: border-color .18s, box-shadow .18s, background .18s; }
-      input:focus, select:focus, textarea:focus { border-color: rgba(197, 125, 255, .9); background: rgba(13, 8, 28, .78); box-shadow: 0 0 0 3px rgba(171, 94, 255, .16), inset 0 1px rgba(255,255,255,.08); }
-      textarea { min-height: 54px; resize: vertical; }
-      details { margin: 18px 0 4px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; background: rgba(5, 3, 14, .22); }
-      summary { cursor: pointer; color: #e9d8ff; font-weight: 700; }
-      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-      .checks { display: flex; flex-wrap: wrap; gap: 16px; }
-      .checks label { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
-      .checks input { width: 16px; height: 16px; margin: 0; accent-color: #bd71ff; }
-      button, a.button { display: inline-flex; align-items: center; justify-content: center; margin: 8px 8px 0 0; padding: 10px 15px; border: 1px solid rgba(255,255,255,.16); border-radius: 11px; background: linear-gradient(135deg, #a75cff, #de62b5); box-shadow: 0 9px 22px rgba(170, 76, 255, .24), inset 0 1px rgba(255,255,255,.3); color: #fff; cursor: pointer; text-decoration: none; font-family: inherit; font-size: 13px; font-weight: 700; transition: transform .18s, filter .18s; }
-      button:hover, a.button:hover { filter: brightness(1.12); transform: translateY(-1px); }
-      button.secondary { background: rgba(255,255,255,.1); box-shadow: inset 0 1px rgba(255,255,255,.1); }
-      #message { min-height: 24px; margin: 4px 0 10px; color: #f2c5ff; font-size: 13px; }
-      .status { color: #8ff0c1; }
-      .error { color: #ff9eae; }
-      code { color: #e6c9ff; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
-      @media (max-width: 560px) { main { padding-top: 22px; } .hero { align-items: flex-start; } .hero-mark { width: 48px; height: 48px; border-radius: 15px; font-size: 24px; } section { padding: 18px; border-radius: 17px; } .row { grid-template-columns: 1fr; } }
-    </style>
+    <link rel="stylesheet" href="/theme.css" />
+    <link rel="stylesheet" href="/setup.css" />
   </head>
   <body>
+    <!-- Top Navigation Header -->
+    <header>
+      <div class="nav-container">
+        <a href="/setup" class="nav-brand">
+          <div class="brand-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="10 8 16 12 10 16 10 8"></polygon>
+            </svg>
+          </div>
+          <div>
+            <div class="brand-title">Spotify OBS Overlay</div>
+            <div class="brand-subtitle">Local Control Center</div>
+          </div>
+        </a>
+        <nav class="nav-links">
+          <a href="/setup" class="nav-btn active">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Setup
+          </a>
+          <a href="/check" class="nav-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+            Health Check
+          </a>
+          <a href="/test" target="_blank" class="nav-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            Test Overlay
+          </a>
+        </nav>
+      </div>
+    </header>
+
     <main>
-      <div class="hero"><div class="hero-mark">♫</div><div><div class="eyebrow">LOCAL CONTROL CENTER</div><h1>Twitch &amp; Spotify setup</h1><p>This page stays local on this computer. The OBS overlay works without connecting either account.</p></div></div>
-      <p><a class="button" href="/check">Open health check</a></p>
-      <div id="message"></div>
-
-      <section>
-        <h2>Twitch bot</h2>
-        <label>Twitch Client ID<input id="twitch-client-id" autocomplete="off" /></label>
-        <label>Target channel<input id="twitch-channel" placeholder="your_channel_name" autocomplete="off" /></label>
-        <p id="twitch-status" class="status">Not connected</p>
-        <button id="twitch-connect">Authorize bot account</button>
-        <button id="twitch-disconnect" class="secondary">Disconnect</button>
-        <p id="twitch-device"></p>
-        <small>Create a Twitch application configured for Device Code flow. Make the bot account a moderator in the target channel.</small>
-      </section>
-
-      <section>
-        <h2>Spotify</h2>
-        <label>Spotify Client ID<input id="spotify-client-id" autocomplete="off" /></label>
-        <p id="spotify-status" class="status">Not connected</p>
-        <button id="spotify-connect">Authorize Spotify</button>
-        <button id="spotify-disconnect" class="secondary">Disconnect</button>
-        <small>Use a Spotify app with this redirect URI: <code id="redirect-uri"></code>. Reconnect after an app permission change.</small>
-      </section>
-
-      <section>
-        <h2>Commands</h2>
-        <div class="checks">
-          <label><input id="chat-enabled" type="checkbox" /> Enable Twitch commands</label>
-          <label><input id="requests-enabled" type="checkbox" /> Enable song requests</label>
+      <!-- Hero Banner -->
+      <section class="hero">
+        <div class="hero-text">
+          <h1>Twitch &amp; Spotify Configuration</h1>
+          <p>Local-only control. The OBS overlay displays automatically without requiring external accounts.</p>
         </div>
-        <label>Current-song aliases (comma separated)<input id="current-song-commands" /></label>
-        <label>Request aliases (comma separated)<input id="request-commands" /></label>
-        <label>Minimum request role<select id="request-role"><option value="everyone">Everyone</option><option value="subscriber">Subscriber</option><option value="vip">VIP</option><option value="moderator">Moderator</option><option value="broadcaster">Broadcaster</option></select></label>
-        <div class="row">
-          <label>Per-viewer cooldown (seconds)<input id="user-cooldown" type="number" min="0" max="86400" /></label>
-          <label>Global cooldown (seconds)<input id="global-cooldown" type="number" min="0" max="86400" /></label>
+        <div class="hero-badge">
+          <span class="pulse"></span>
+          <span>OBS Ready</span>
         </div>
-        <details>
-          <summary>Bot messages and errors</summary>
-          <small>Available placeholders: <code>{user}</code>, <code>{track}</code>, <code>{title}</code>, <code>{artist}</code>, <code>{seconds}</code>, and <code>{command}</code>. Leave a message blank to suppress it. Technical errors are written to <code>spotify-overlay.log</code>, not Twitch chat.</small>
-          <label>Now playing<textarea id="message-now-playing"></textarea></label>
-          <label>Paused track<textarea id="message-paused"></textarea></label>
-          <label>Nothing playing<textarea id="message-nothing-playing"></textarea></label>
-          <label>Song queued successfully<textarea id="message-queued"></textarea></label>
-          <label>Song-request usage<textarea id="message-usage"></textarea></label>
-          <label>Permission denied<textarea id="message-permission-denied"></textarea></label>
-          <label>Cooldown<textarea id="message-cooldown"></textarea></label>
-          <label>Generic request error<textarea id="message-request-error"></textarea></label>
-          <label>No matching track<textarea id="message-no-match"></textarea></label>
-          <label>No active Spotify device<textarea id="message-no-device"></textarea></label>
-          <label>Spotify not connected<textarea id="message-spotify-not-connected"></textarea></label>
-          <label>Spotify authorization expired<textarea id="message-spotify-auth-expired"></textarea></label>
-          <label>Spotify request denied<textarea id="message-spotify-denied"></textarea></label>
-          <label>Spotify rate limit<textarea id="message-rate-limited"></textarea></label>
-          <label>Spotify quota exhausted<textarea id="message-quota-exceeded"></textarea></label>
-        </details>
-        <button id="save">Save settings</button>
       </section>
+
+      <!-- Global Message / Status Notification -->
+      <div id="message" role="alert"></div>
+
+      <!-- Account Integrations (2-column grid, responsive collapse) -->
+      <div class="grid-2">
+        <!-- Twitch Bot Section -->
+        <section class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="service-icon twitch">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+              </div>
+              <h2 class="card-title">Twitch Bot</h2>
+            </div>
+            <span id="twitch-status" class="status-badge">Not connected</span>
+          </div>
+
+          <div class="field">
+            <label for="twitch-client-id">Twitch Client ID</label>
+            <div class="input-wrapper">
+              <input id="twitch-client-id" type="password" placeholder="Twitch Application Client ID" autocomplete="off" spellcheck="false" />
+              <button type="button" class="field-btn" data-toggle="twitch-client-id" title="Toggle visibility">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="twitch-channel">Target Streamer Channel</label>
+            <input id="twitch-channel" type="text" placeholder="channel_name (without @)" autocomplete="off" spellcheck="false" />
+          </div>
+
+          <div class="btn-group">
+            <button id="twitch-connect" class="btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+              Authorize Bot
+            </button>
+            <button id="twitch-disconnect" class="btn-secondary">Disconnect</button>
+          </div>
+
+          <p id="twitch-device"></p>
+          <div class="helper-text">Create a Twitch application with Device Code flow enabled. Make the bot account a moderator in the target channel.</div>
+        </section>
+
+        <!-- Spotify Integration Section -->
+        <section class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="service-icon spotify">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+              </div>
+              <h2 class="card-title">Spotify</h2>
+            </div>
+            <span id="spotify-status" class="status-badge">Not connected</span>
+          </div>
+
+          <div class="field">
+            <label for="spotify-client-id">Spotify Client ID</label>
+            <div class="input-wrapper">
+              <input id="spotify-client-id" type="password" placeholder="Spotify Application Client ID" autocomplete="off" spellcheck="false" />
+              <button type="button" class="field-btn" data-toggle="spotify-client-id" title="Toggle visibility">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Spotify Redirect URI</label>
+            <div class="copy-box">
+              <code id="redirect-uri"></code>
+              <button type="button" id="copy-redirect" class="copy-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Copy URI
+              </button>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button id="spotify-connect" class="btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+              Authorize Spotify
+            </button>
+            <button id="spotify-disconnect" class="btn-secondary">Disconnect</button>
+          </div>
+
+          <div class="helper-text">Add the Redirect URI above to your Spotify Developer Dashboard under App Settings.</div>
+        </section>
+      </div>
+
+      <!-- Commands & Permissions Engine -->
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="service-icon chat">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <h2 class="card-title">Commands &amp; Song Requests</h2>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="switch-row">
+            <label for="chat-enabled" class="switch-label">
+              <span class="switch-title">Twitch Chat Commands</span>
+              <span class="switch-desc">Respond to viewer commands in chat</span>
+            </label>
+            <label class="switch">
+              <input id="chat-enabled" type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="switch-row">
+            <label for="requests-enabled" class="switch-label">
+              <span class="switch-title">Song Request Queue</span>
+              <span class="switch-desc">Allow viewers to queue songs to Spotify</span>
+            </label>
+            <label class="switch">
+              <input id="requests-enabled" type="checkbox" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="current-song-commands">Current-Song Aliases (comma separated)</label>
+            <input id="current-song-commands" type="text" placeholder="!song, !np, !music, !track" />
+          </div>
+
+          <div class="field">
+            <label for="request-commands">Song-Request Aliases (comma separated)</label>
+            <input id="request-commands" type="text" placeholder="!sr, !request, !songrequest" />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="request-role">Minimum Role Required for Requests</label>
+            <select id="request-role">
+              <option value="everyone">Everyone (All Viewers)</option>
+              <option value="subscriber">Subscriber &amp; Above</option>
+              <option value="vip">VIP &amp; Above</option>
+              <option value="moderator">Moderator &amp; Above</option>
+              <option value="broadcaster">Broadcaster Only</option>
+            </select>
+          </div>
+
+          <div class="grid-2" style="gap: 10px;">
+            <div class="field">
+              <label for="user-cooldown">Per-User Cooldown (s)</label>
+              <input id="user-cooldown" type="number" min="0" max="86400" />
+            </div>
+            <div class="field">
+              <label for="global-cooldown">Global Cooldown (s)</label>
+              <input id="global-cooldown" type="number" min="0" max="86400" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Message Templates Manager -->
+      <section class="card template-section">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="service-icon chat">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7m0 0V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6.5L4 21z"></path></svg>
+            </div>
+            <h2 class="card-title">Bot Chat Responses &amp; Messages</h2>
+          </div>
+        </div>
+
+        <div class="helper-text">
+          Placeholders available: <code>{user}</code>, <code>{track}</code>, <code>{title}</code>, <code>{artist}</code>, <code>{seconds}</code>, <code>{command}</code>. Leave any message blank to silence it.
+        </div>
+
+        <!-- Category Tabs -->
+        <div class="tab-bar">
+          <button type="button" class="tab-btn active" data-tab="tab-playback">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            Playback Status
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-queue">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            Queue &amp; Requests
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-permissions">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Permissions &amp; Limits
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-system">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            System &amp; Errors
+          </button>
+        </div>
+
+        <!-- Tab 1: Playback Status -->
+        <div id="tab-playback" class="tab-panel active">
+          <div class="field">
+            <label for="message-now-playing">Now Playing Response</label>
+            <textarea id="message-now-playing" rows="2"></textarea>
+            <div class="tag-pills">
+              <span class="tag-pill" data-insert="{track}">+{track}</span>
+              <span class="tag-pill" data-insert="{artist}">+{artist}</span>
+              <span class="tag-pill" data-insert="{user}">+{user}</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="message-paused">Paused Track Response</label>
+            <textarea id="message-paused" rows="2"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="message-nothing-playing">Nothing Playing Response</label>
+            <textarea id="message-nothing-playing" rows="2"></textarea>
+          </div>
+        </div>
+
+        <!-- Tab 2: Queue & Requests -->
+        <div id="tab-queue" class="tab-panel">
+          <div class="field">
+            <label for="message-queued">Song Queued Successfully</label>
+            <textarea id="message-queued" rows="2"></textarea>
+            <div class="tag-pills">
+              <span class="tag-pill" data-insert="{track}">+{track}</span>
+              <span class="tag-pill" data-insert="{user}">+{user}</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="message-usage">Command Usage Helper</label>
+            <textarea id="message-usage" rows="2"></textarea>
+            <div class="tag-pills">
+              <span class="tag-pill" data-insert="{command}">+{command}</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="message-no-match">No Matching Track Found</label>
+            <textarea id="message-no-match" rows="2"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="message-request-error">Generic Request Error</label>
+            <textarea id="message-request-error" rows="2"></textarea>
+          </div>
+        </div>
+
+        <!-- Tab 3: Permissions & Limits -->
+        <div id="tab-permissions" class="tab-panel">
+          <div class="field">
+            <label for="message-permission-denied">Permission Denied (Role)</label>
+            <textarea id="message-permission-denied" rows="2"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="message-cooldown">Cooldown Active</label>
+            <textarea id="message-cooldown" rows="2"></textarea>
+            <div class="tag-pills">
+              <span class="tag-pill" data-insert="{seconds}">+{seconds}</span>
+              <span class="tag-pill" data-insert="{user}">+{user}</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="message-rate-limited">Rate Limit Exceeded</label>
+            <textarea id="message-rate-limited" rows="2"></textarea>
+          </div>
+        </div>
+
+        <!-- Tab 4: System & Spotify Errors -->
+        <div id="tab-system" class="tab-panel">
+          <div class="field">
+            <label for="message-no-device">No Active Spotify Playback Device</label>
+            <textarea id="message-no-device" rows="2"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="message-spotify-not-connected">Spotify Not Connected</label>
+            <textarea id="message-spotify-not-connected" rows="2"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="message-spotify-auth-expired">Spotify Authorization Expired</label>
+            <textarea id="message-spotify-auth-expired" rows="2"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="message-spotify-denied">Spotify Request Denied</label>
+            <textarea id="message-spotify-denied" rows="2"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="message-quota-exceeded">Spotify API Quota Exhausted</label>
+            <textarea id="message-quota-exceeded" rows="2"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sticky Save Bar -->
+      <div class="save-bar">
+        <div id="save-indicator" class="save-status">
+          <span class="dot"></span>
+          <span id="save-status-text">All settings up to date</span>
+        </div>
+        <button id="save" class="btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Save Settings
+        </button>
+      </div>
     </main>
-    <script>
-      (() => {
-        let csrf = "";
-        let dirty = false;
-        const $ = (id) => document.getElementById(id);
-        const message = (text, error = false) => { $("message").textContent = text; $("message").className = error ? "error" : ""; };
-        const aliases = (value) => value.split(",").map((item) => item.trim()).filter(Boolean);
-        async function api(url, options = {}) {
-          const headers = { ...(options.body ? { "Content-Type": "application/json" } : {}), ...(options.headers || {}) };
-          if (options.method && options.method !== "GET") headers["X-Spotify-Overlay-CSRF"] = csrf;
-          const response = await fetch(url, { ...options, headers });
-          const body = await response.json().catch(() => ({}));
-          if (!response.ok) throw new Error(body.error || body.message || `Request failed (${response.status})`);
-          return body;
-        }
-        function setStatus(element, text, error = false) { element.textContent = text; element.className = error ? "error" : "status"; }
-        function fillSettings(data) {
-          const settings = data.settings;
-          $("twitch-client-id").value = settings.twitch_client_id || "";
-          $("twitch-channel").value = settings.twitch_channel || "";
-          $("spotify-client-id").value = settings.spotify_client_id || "";
-          $("chat-enabled").checked = settings.chat.enabled;
-          $("requests-enabled").checked = settings.chat.requests_enabled;
-          $("current-song-commands").value = settings.chat.current_song_commands.join(", ");
-          $("request-commands").value = settings.chat.request_commands.join(", ");
-          $("request-role").value = settings.chat.request_role;
-          $("user-cooldown").value = settings.chat.request_user_cooldown_secs;
-          $("global-cooldown").value = settings.chat.request_global_cooldown_secs;
-          const messages = settings.chat.messages;
-          $("message-now-playing").value = messages.now_playing;
-          $("message-paused").value = messages.paused;
-          $("message-nothing-playing").value = messages.nothing_playing;
-          $("message-queued").value = messages.queued;
-          $("message-usage").value = messages.usage;
-          $("message-permission-denied").value = messages.permission_denied;
-          $("message-cooldown").value = messages.cooldown;
-          $("message-request-error").value = messages.request_error;
-          $("message-no-match").value = messages.no_match;
-          $("message-no-device").value = messages.no_device;
-          $("message-spotify-not-connected").value = messages.spotify_not_connected;
-          $("message-spotify-auth-expired").value = messages.spotify_auth_expired;
-          $("message-spotify-denied").value = messages.spotify_denied;
-          $("message-rate-limited").value = messages.rate_limited;
-          $("message-quota-exceeded").value = messages.quota_exceeded;
-        }
-        function fillStatus(data, overwriteSettings = false) {
-          csrf = data.csrf_token;
-          if (overwriteSettings || !dirty) fillSettings(data);
-          setStatus($("twitch-status"), data.status.twitch_connected ? `Connected as ${data.status.twitch_user || "bot"}` : (data.status.twitch_status || "Not connected"), !data.status.twitch_connected && data.status.twitch_status.startsWith("error"));
-          setStatus($("spotify-status"), data.status.spotify_connected ? "Connected" : (data.status.spotify_status || "Not connected"), !data.status.spotify_connected && data.status.spotify_status.startsWith("error"));
-          if (data.twitch_device && data.twitch_device.state === "pending") $("twitch-device").textContent = `Authorize at ${data.twitch_device.verification_uri} with code ${data.twitch_device.user_code}.`;
-          if (data.status.last_error) message(`Connection error: ${data.status.last_error}`, true);
-          else if (data.status.twitch_status === "disabled") setStatus($("twitch-status"), "Commands are disabled — enable them below and save.");
-        }
-        async function load(initial = false) { try { fillStatus(await api("/api/setup/status"), initial); } catch (error) { message(error.message, true); } }
-        ["twitch-client-id", "twitch-channel", "spotify-client-id", "chat-enabled", "requests-enabled", "current-song-commands", "request-commands", "request-role", "user-cooldown", "global-cooldown", "message-now-playing", "message-paused", "message-nothing-playing", "message-queued", "message-usage", "message-permission-denied", "message-cooldown", "message-request-error", "message-no-match", "message-no-device", "message-spotify-not-connected", "message-spotify-auth-expired", "message-spotify-denied", "message-rate-limited", "message-quota-exceeded"].forEach((id) => {
-          $(id).addEventListener("input", () => { dirty = true; });
-          $(id).addEventListener("change", () => { dirty = true; });
-        });
-        function settingsPayload() {
-          return {
-              twitch_client_id: $("twitch-client-id").value.trim(), twitch_channel: $("twitch-channel").value.trim(), spotify_client_id: $("spotify-client-id").value.trim(),
-              chat: { enabled: $("chat-enabled").checked, requests_enabled: $("requests-enabled").checked, current_song_commands: aliases($("current-song-commands").value), request_commands: aliases($("request-commands").value), request_role: $("request-role").value, request_user_cooldown_secs: Number($("user-cooldown").value), request_global_cooldown_secs: Number($("global-cooldown").value), messages: {
-                now_playing: $("message-now-playing").value, paused: $("message-paused").value, nothing_playing: $("message-nothing-playing").value, queued: $("message-queued").value, usage: $("message-usage").value, permission_denied: $("message-permission-denied").value, cooldown: $("message-cooldown").value, request_error: $("message-request-error").value, no_match: $("message-no-match").value, no_device: $("message-no-device").value, spotify_not_connected: $("message-spotify-not-connected").value, spotify_auth_expired: $("message-spotify-auth-expired").value, spotify_denied: $("message-spotify-denied").value, rate_limited: $("message-rate-limited").value, quota_exceeded: $("message-quota-exceeded").value
-              } }
-          };
-        }
-        async function saveSettings(showMessage = true) {
-          const result = await api("/api/setup/settings", { method: "PUT", body: JSON.stringify(settingsPayload()) });
-          dirty = false;
-          if (showMessage) message("Settings saved.");
-          await load();
-          return result;
-        }
-        $("save").onclick = async () => {
-          try { await saveSettings();
-          } catch (error) { message(error.message, true); }
-        };
-        $("twitch-connect").onclick = async () => { try { await saveSettings(false); const result = await api("/api/auth/twitch/start", { method: "POST" }); $("twitch-device").textContent = `Authorize at ${result.verification_uri} with code ${result.user_code}.`; window.open(result.verification_uri, "_blank"); message("Waiting for Twitch authorization…"); } catch (error) { message(error.message, true); } };
-        $("twitch-disconnect").onclick = async () => { try { await api("/api/auth/twitch/disconnect", { method: "POST" }); message("Twitch disconnected."); await load(); } catch (error) { message(error.message, true); } };
-        $("spotify-connect").onclick = async () => { try { await saveSettings(false); const result = await api("/api/auth/spotify/start", { method: "POST" }); window.location = result.authorization_url; } catch (error) { message(error.message, true); } };
-        $("spotify-disconnect").onclick = async () => { try { await api("/api/auth/spotify/disconnect", { method: "POST" }); message("Spotify disconnected."); await load(); } catch (error) { message(error.message, true); } };
-        $("redirect-uri").textContent = `${location.origin}/auth/spotify/callback`;
-        load(true); setInterval(() => load(false), 3000);
-      })();
-    </script>
+
+    <script src="/setup.js"></script>
   </body>
 </html>

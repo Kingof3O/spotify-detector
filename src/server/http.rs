@@ -24,6 +24,11 @@ const TEST_HTML: &str = include_str!("../../overlay/test.html");
 const TEST_ARTWORK_SVG: &str = include_str!("../../overlay/test-artwork.svg");
 const SETUP_HTML: &str = include_str!("../../overlay/setup.html");
 const CHECK_HTML: &str = include_str!("../../overlay/check.html");
+const THEME_CSS: &str = include_str!("../../overlay/theme.css");
+const SETUP_CSS: &str = include_str!("../../overlay/setup.css");
+const SETUP_JS: &str = include_str!("../../overlay/setup.js");
+const CHECK_CSS: &str = include_str!("../../overlay/check.css");
+const CHECK_JS: &str = include_str!("../../overlay/check.js");
 const OVERLAY_CSS: &str = include_str!("../../overlay/overlay.css");
 const OVERLAY_JS: &str = include_str!("../../overlay/overlay.js");
 
@@ -34,6 +39,11 @@ pub fn router(state: AppState) -> Router {
         .route("/setup", get(setup))
         .route("/check", get(check))
         .route("/test-artwork.svg", get(test_artwork))
+        .route("/theme.css", get(theme_css))
+        .route("/setup.css", get(setup_css))
+        .route("/setup.js", get(setup_js))
+        .route("/check.css", get(check_css))
+        .route("/check.js", get(check_js))
         .route("/overlay.css", get(overlay_css))
         .route("/overlay.js", get(overlay_js))
         .route("/health", get(health))
@@ -81,6 +91,56 @@ async fn test_artwork() -> impl IntoResponse {
             ),
         ],
         TEST_ARTWORK_SVG,
+    )
+}
+
+async fn theme_css() -> impl IntoResponse {
+    (
+        [(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("text/css; charset=utf-8"),
+        )],
+        THEME_CSS,
+    )
+}
+
+async fn setup_css() -> impl IntoResponse {
+    (
+        [(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("text/css; charset=utf-8"),
+        )],
+        SETUP_CSS,
+    )
+}
+
+async fn setup_js() -> impl IntoResponse {
+    (
+        [(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("text/javascript; charset=utf-8"),
+        )],
+        SETUP_JS,
+    )
+}
+
+async fn check_css() -> impl IntoResponse {
+    (
+        [(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("text/css; charset=utf-8"),
+        )],
+        CHECK_CSS,
+    )
+}
+
+async fn check_js() -> impl IntoResponse {
+    (
+        [(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("text/javascript; charset=utf-8"),
+        )],
+        CHECK_JS,
     )
 }
 
