@@ -1,10 +1,11 @@
-/* 3-Column Ergonomic Dashboard Layout (Zero empty space) */
+/* 3-Column Ergonomic Dashboard Layout (Zero empty space & Equal Column Heights) */
 .setup-3col-dashboard {
   display: grid;
   grid-template-columns: 350px 380px minmax(0, 1fr);
   gap: 16px;
   flex: 1;
   min-height: 0;
+  height: 100%;
   align-items: stretch;
 }
 
@@ -13,9 +14,30 @@
   flex-direction: column;
   gap: 16px;
   min-height: 0;
+  height: 100%;
 }
 
-/* Cardlet inside Integration cards */
+.setup-col-integrations {
+  justify-content: space-between;
+}
+
+/* Cardlet inside Integration cards - Takes equal flex split */
+.card-integration {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
+}
+
+.card-full-col {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
+}
+
 .connection-info-cardlet {
   display: flex;
   align-items: center;
@@ -43,11 +65,11 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 
 label {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -63,12 +85,12 @@ input[type="password"],
 input[type="number"],
 select {
   width: 100%;
-  padding: 8px 12px;
-  border-radius: 9px;
+  padding: 7px 11px;
+  border-radius: 8px;
   background: var(--input-bg);
   border: 1px solid var(--input-border);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 12.5px;
   font-family: inherit;
   outline: none;
   transition: all 0.15s ease;
@@ -82,7 +104,7 @@ select:focus {
 }
 
 .input-wrapper input {
-  padding-right: 36px;
+  padding-right: 34px;
 }
 
 .field-btn {
@@ -90,14 +112,14 @@ select:focus {
   right: 5px;
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 6px;
   background: transparent;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   transition: all 0.15s ease;
 }
 
@@ -111,8 +133,8 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  border-radius: 9px;
+  padding: 5px 9px;
+  border-radius: 8px;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.08);
   gap: 8px;
@@ -120,7 +142,7 @@ select:focus {
 
 .copy-box code {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 11.5px;
+  font-size: 11px;
   color: #d8b4fe;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -130,10 +152,10 @@ select:focus {
 .copy-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 9px;
+  gap: 4px;
+  padding: 3px 8px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   background: rgba(168, 85, 247, 0.2);
   border: 1px solid rgba(168, 85, 247, 0.3);
@@ -150,9 +172,9 @@ select:focus {
 /* Device Auth Callout */
 #twitch-device {
   display: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  font-size: 11.5px;
   background: rgba(168, 85, 247, 0.12);
   border: 1px dashed rgba(168, 85, 247, 0.4);
   color: #e9d5ff;
@@ -167,8 +189,8 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  border-radius: 10px;
+  padding: 8px 12px;
+  border-radius: 9px;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -181,13 +203,13 @@ select:focus {
 }
 
 .switch-title {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .switch-desc {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--text-muted);
 }
 
@@ -244,7 +266,7 @@ select:focus {
 .category-pill-bar {
   display: flex;
   gap: 4px;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.35);
   padding: 4px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -258,7 +280,7 @@ select:focus {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 11px;
+  padding: 6px 12px;
   border-radius: 7px;
   font-size: 11.5px;
   font-weight: 600;
@@ -281,20 +303,32 @@ select:focus {
   border: 1px solid rgba(168, 85, 247, 0.35);
 }
 
+/* Tab Panels (All inputs visible simultaneously for active tab) */
+.template-tab-panel {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.template-tab-panel.active {
+  display: flex;
+}
+
 /* Tag Insert Pills */
 .tag-pills {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 2px;
+  gap: 5px;
+  margin-top: 1px;
 }
 
 .tag-pill {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 10.5px;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   background: rgba(168, 85, 247, 0.14);
   color: #d8b4fe;
@@ -308,14 +342,14 @@ select:focus {
   color: #fff;
 }
 
-/* Authentic Live Twitch Chat Simulator */
+/* Authentic Live Twitch Chat Simulator (Pinned to bottom) */
 .twitch-chat-simulator {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #0e0c13;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: #0d0a13;
   border: 1px solid rgba(145, 70, 255, 0.25);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   margin-top: auto;
@@ -325,27 +359,27 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   color: #bf94ff;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding-bottom: 6px;
+  padding-bottom: 4px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .simulator-messages {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .sim-msg-row {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  font-size: 13px;
-  line-height: 1.4;
+  gap: 7px;
+  font-size: 12.5px;
+  line-height: 1.35;
 }
 
 .badge-broadcaster {
@@ -391,6 +425,7 @@ select:focus {
 @media (max-width: 1200px) {
   .setup-3col-dashboard {
     grid-template-columns: 1fr 1fr;
+    overflow-y: auto;
   }
 
   .setup-col:nth-child(3) {

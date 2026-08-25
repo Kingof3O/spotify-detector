@@ -55,12 +55,12 @@
       <!-- Global Notification Banner -->
       <div id="message" role="alert"></div>
 
-      <!-- 3-Column Ergonomic Dashboard (Zero Empty Gaps) -->
+      <!-- 3-Column Equal Height Dashboard Grid -->
       <div class="setup-3col-dashboard">
-        <!-- COLUMN 1: ACCOUNT INTEGRATIONS (350px) -->
-        <div class="setup-col">
+        <!-- COLUMN 1: ACCOUNT INTEGRATIONS (Twitch & Spotify equal split) -->
+        <div class="setup-col setup-col-integrations">
           <!-- Twitch Bot Card -->
-          <section class="card">
+          <section class="card card-integration">
             <div class="card-header">
               <div class="card-title-group">
                 <div class="service-icon twitch">
@@ -101,12 +101,12 @@
                 <i class="fa-solid fa-shield-halved"></i>
                 <span>EventSub Listener</span>
               </div>
-              <span id="twitch-sub-status" class="info-cardlet-right">Active</span>
+              <span id="twitch-sub-status" class="info-cardlet-right">Connected</span>
             </div>
           </section>
 
           <!-- Spotify Integration Card -->
-          <section class="card">
+          <section class="card card-integration">
             <div class="card-header">
               <div class="card-title-group">
                 <div class="service-icon spotify">
@@ -151,14 +151,14 @@
                 <i class="fa-solid fa-compact-disc"></i>
                 <span>Queue Permission</span>
               </div>
-              <span id="spotify-perm-status" class="info-cardlet-right">Granted</span>
+              <span id="spotify-perm-status" class="info-cardlet-right">Authorized</span>
             </div>
           </section>
         </div>
 
-        <!-- COLUMN 2: BOT ENGINE & RULES (380px) -->
+        <!-- COLUMN 2: BOT ENGINE & RULES (Same total height) -->
         <div class="setup-col">
-          <section class="card" style="height: 100%; justify-content: space-between;">
+          <section class="card card-full-col">
             <div class="card-header">
               <div class="card-title-group">
                 <div class="service-icon chat">
@@ -169,7 +169,7 @@
             </div>
 
             <!-- Primary Engine Toggles -->
-            <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 10px;">
               <div class="switch-row">
                 <label for="chat-enabled" class="switch-label">
                   <span class="switch-title">Chat Bot Engine</span>
@@ -229,9 +229,9 @@
           </section>
         </div>
 
-        <!-- COLUMN 3: RESPONSE STUDIO & TWITCH CHAT SIMULATOR (1fr) -->
+        <!-- COLUMN 3: MESSAGE RESPONSE STUDIO (Direct Inputs for Active Tab) -->
         <div class="setup-col">
-          <section class="card" style="height: 100%; justify-content: space-between;">
+          <section class="card card-full-col">
             <div class="card-header">
               <div class="card-title-group">
                 <div class="service-icon chat">
@@ -242,53 +242,130 @@
               <span class="helper-text" style="font-size: 11px; color: var(--text-muted);">Blank = Silenced</span>
             </div>
 
-            <!-- Category Filter Tabs -->
+            <!-- Category Filter Tabs (No "All Events") -->
             <div class="category-pill-bar">
-              <button type="button" class="cat-pill active" data-cat="all">All Events</button>
-              <button type="button" class="cat-pill" data-cat="playback">Playback</button>
-              <button type="button" class="cat-pill" data-cat="requests">Requests &amp; Queue</button>
-              <button type="button" class="cat-pill" data-cat="permissions">Permissions</button>
-              <button type="button" class="cat-pill" data-cat="errors">Errors</button>
+              <button type="button" class="cat-pill active" data-tab="tab-playback">
+                <i class="fa-solid fa-music"></i>
+                Playback
+              </button>
+              <button type="button" class="cat-pill" data-tab="tab-queue">
+                <i class="fa-solid fa-list-ul"></i>
+                Requests &amp; Queue
+              </button>
+              <button type="button" class="cat-pill" data-tab="tab-permissions">
+                <i class="fa-solid fa-shield-halved"></i>
+                Permissions
+              </button>
+              <button type="button" class="cat-pill" data-tab="tab-errors">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Errors &amp; API
+              </button>
             </div>
 
-            <!-- Event Selector Dropdown -->
-            <div class="field">
-              <label for="template-selector">Trigger Event</label>
-              <select id="template-selector">
-                <optgroup label="Playback Status" data-group="playback">
-                  <option value="now_playing" data-tokens="{track},{artist},{user}">Now Playing Track</option>
-                  <option value="paused">Paused Track</option>
-                  <option value="nothing_playing">Nothing Playing</option>
-                </optgroup>
-                <optgroup label="Requests &amp; Queue" data-group="requests">
-                  <option value="queued" data-tokens="{track},{user}">Song Queued Successfully</option>
-                  <option value="usage" data-tokens="{command}">Command Usage Helper</option>
-                  <option value="no_match">No Matching Track Found</option>
-                  <option value="request_error">Generic Request Error</option>
-                </optgroup>
-                <optgroup label="Permissions &amp; Limits" data-group="permissions">
-                  <option value="permission_denied">Permission Denied (Role)</option>
-                  <option value="cooldown" data-tokens="{seconds},{user}">Cooldown Active</option>
-                  <option value="rate_limited">Rate Limit Exceeded</option>
-                </optgroup>
-                <optgroup label="Errors &amp; Spotify API" data-group="errors">
-                  <option value="no_device">No Active Playback Device</option>
-                  <option value="spotify_not_connected">Spotify Not Connected</option>
-                  <option value="spotify_auth_expired">Authorization Expired</option>
-                  <option value="spotify_denied">Spotify Request Denied</option>
-                  <option value="quota_exceeded">Spotify Quota Exhausted</option>
-                </optgroup>
-              </select>
+            <!-- TAB 1: PLAYBACK STATUS (All inputs visible at once) -->
+            <div id="tab-playback" class="template-tab-panel active">
+              <div class="field" data-trigger="!song">
+                <label for="message-now-playing">Now Playing Response</label>
+                <input id="message-now-playing" type="text" autocomplete="off" spellcheck="false" />
+                <div class="tag-pills">
+                  <span class="tag-pill" data-insert="{track}">+{track}</span>
+                  <span class="tag-pill" data-insert="{artist}">+{artist}</span>
+                  <span class="tag-pill" data-insert="{user}">+{user}</span>
+                </div>
+              </div>
+
+              <div class="field" data-trigger="!song (paused)">
+                <label for="message-paused">Paused Track Response</label>
+                <input id="message-paused" type="text" autocomplete="off" spellcheck="false" />
+              </div>
+
+              <div class="field" data-trigger="!song (idle)">
+                <label for="message-nothing-playing">Nothing Playing Response</label>
+                <input id="message-nothing-playing" type="text" autocomplete="off" spellcheck="false" />
+              </div>
             </div>
 
-            <!-- Active Response Template Input -->
-            <div class="field">
-              <label for="active-template-input">Bot Response Message</label>
-              <input id="active-template-input" type="text" placeholder="Enter bot response (or leave empty to silence)" autocomplete="off" spellcheck="false" />
-              <div id="active-tag-pills" class="tag-pills"></div>
+            <!-- TAB 2: REQUESTS & QUEUE (All inputs visible at once) -->
+            <div id="tab-queue" class="template-tab-panel">
+              <div class="field" data-trigger="!sr vampire">
+                <label for="message-queued">Song Queued Successfully</label>
+                <input id="message-queued" type="text" autocomplete="off" spellcheck="false" />
+                <div class="tag-pills">
+                  <span class="tag-pill" data-insert="{track}">+{track}</span>
+                  <span class="tag-pill" data-insert="{user}">+{user}</span>
+                </div>
+              </div>
+
+              <div class="field" data-trigger="!sr">
+                <label for="message-usage">Command Usage Helper</label>
+                <input id="message-usage" type="text" autocomplete="off" spellcheck="false" />
+                <div class="tag-pills">
+                  <span class="tag-pill" data-insert="{command}">+{command}</span>
+                </div>
+              </div>
+
+              <div class="field" data-trigger="!sr non_existing_track">
+                <label for="message-no-match">No Matching Track Found</label>
+                <input id="message-no-match" type="text" autocomplete="off" spellcheck="false" />
+              </div>
+
+              <div class="field" data-trigger="!sr error">
+                <label for="message-request-error">Generic Request Error</label>
+                <input id="message-request-error" type="text" autocomplete="off" spellcheck="false" />
+              </div>
             </div>
 
-            <!-- Authentic Live Twitch Chat Simulator -->
+            <!-- TAB 3: PERMISSIONS & LIMITS (All inputs visible at once) -->
+            <div id="tab-permissions" class="template-tab-panel">
+              <div class="field" data-trigger="!sr (role restricted)">
+                <label for="message-permission-denied">Permission Denied (Role)</label>
+                <input id="message-permission-denied" type="text" autocomplete="off" spellcheck="false" />
+              </div>
+
+              <div class="field" data-trigger="!song (cooldown)">
+                <label for="message-cooldown">Cooldown Active</label>
+                <input id="message-cooldown" type="text" autocomplete="off" spellcheck="false" />
+                <div class="tag-pills">
+                  <span class="tag-pill" data-insert="{seconds}">+{seconds}</span>
+                  <span class="tag-pill" data-insert="{user}">+{user}</span>
+                </div>
+              </div>
+
+              <div class="field" data-trigger="!song (rate limit)">
+                <label for="message-rate-limited">Rate Limit Exceeded</label>
+                <input id="message-rate-limited" type="text" autocomplete="off" spellcheck="false" />
+              </div>
+            </div>
+
+            <!-- TAB 4: ERRORS & SPOTIFY API (All inputs visible at once) -->
+            <div id="tab-errors" class="template-tab-panel">
+              <div class="field" data-trigger="!sr (no device)">
+                <label for="message-no-device">No Active Playback Device</label>
+                <input id="message-no-device" type="text" autocomplete="off" spellcheck="false" />
+              </div>
+
+              <div class="field" data-trigger="!sr (spotify disconnected)">
+                <label for="message-spotify-not-connected">Spotify Not Connected</label>
+                <input id="message-spotify-not-connected" type="text" autocomplete="off" spellcheck="false" />
+              </div>
+
+              <div class="field" data-trigger="!sr (auth expired)">
+                <label for="message-spotify-auth-expired">Authorization Expired</label>
+                <input id="message-spotify-auth-expired" type="text" autocomplete="off" spellcheck="false" />
+              </div>
+
+              <div class="field" data-trigger="!sr (request denied)">
+                <label for="message-spotify-denied">Spotify Request Denied</label>
+                <input id="message-spotify-denied" type="text" autocomplete="off" spellcheck="false" />
+              </div>
+
+              <div class="field" data-trigger="!sr (quota exceeded)">
+                <label for="message-quota-exceeded">Spotify Quota Exhausted</label>
+                <input id="message-quota-exceeded" type="text" autocomplete="off" spellcheck="false" />
+              </div>
+            </div>
+
+            <!-- Authentic Live Twitch Chat Simulator (Pinned to bottom) -->
             <div class="twitch-chat-simulator">
               <div class="simulator-header">
                 <span><i class="fa-brands fa-twitch"></i> Live Twitch Chat Simulator</span>

@@ -1,6 +1,6 @@
 /**
  * Stream Manager Setup Controller & Services
- * Modern 3-Column OOP Architecture with Live Twitch Chat Simulation
+ * Modern 3-Column Equal-Height OOP Architecture with Direct Tab Panels & Live Twitch Simulator
  */
 
 /**
@@ -86,7 +86,7 @@ class SettingsStore {
       .filter(Boolean);
   }
 
-  toPayload(dom, messages) {
+  toPayload(dom) {
     return {
       twitch_client_id: dom.twitchClientId.value.trim(),
       twitch_channel: dom.twitchChannel.value.trim(),
@@ -100,21 +100,21 @@ class SettingsStore {
         request_user_cooldown_secs: Number(dom.userCooldown.value),
         request_global_cooldown_secs: Number(dom.globalCooldown.value),
         messages: {
-          now_playing: messages.now_playing || "",
-          paused: messages.paused || "",
-          nothing_playing: messages.nothing_playing || "",
-          queued: messages.queued || "",
-          usage: messages.usage || "",
-          permission_denied: messages.permission_denied || "",
-          cooldown: messages.cooldown || "",
-          request_error: messages.request_error || "",
-          no_match: messages.no_match || "",
-          no_device: messages.no_device || "",
-          spotify_not_connected: messages.spotify_not_connected || "",
-          spotify_auth_expired: messages.spotify_auth_expired || "",
-          spotify_denied: messages.spotify_denied || "",
-          rate_limited: messages.rate_limited || "",
-          quota_exceeded: messages.quota_exceeded || ""
+          now_playing: dom.msgNowPlaying.value,
+          paused: dom.msgPaused.value,
+          nothing_playing: dom.msgNothingPlaying.value,
+          queued: dom.msgQueued.value,
+          usage: dom.msgUsage.value,
+          permission_denied: dom.msgPermissionDenied.value,
+          cooldown: dom.msgCooldown.value,
+          request_error: dom.msgRequestError.value,
+          no_match: dom.msgNoMatch.value,
+          no_device: dom.msgNoDevice.value,
+          spotify_not_connected: dom.msgSpotifyNotConnected.value,
+          spotify_auth_expired: dom.msgSpotifyAuthExpired.value,
+          spotify_denied: dom.msgSpotifyDenied.value,
+          rate_limited: dom.msgRateLimited.value,
+          quota_exceeded: dom.msgQuotaExceeded.value
         }
       }
     };
@@ -122,7 +122,7 @@ class SettingsStore {
 }
 
 /**
- * Main Controller orchestrating DOM interactions, UI feedback, and single-input template management.
+ * Main Controller orchestrating DOM interactions, UI feedback, and live chat simulation.
  */
 class SetupController {
   constructor() {
@@ -130,25 +130,6 @@ class SetupController {
     this.store = new SettingsStore((dirty) => this.renderDirtyState(dirty));
     this.pollTimer = null;
     this.activeBotName = "OverlayBot";
-
-    this.currentTemplateKey = "now_playing";
-    this.messages = {
-      now_playing: "",
-      paused: "",
-      nothing_playing: "",
-      queued: "",
-      usage: "",
-      permission_denied: "",
-      cooldown: "",
-      request_error: "",
-      no_match: "",
-      no_device: "",
-      spotify_not_connected: "",
-      spotify_auth_expired: "",
-      spotify_denied: "",
-      rate_limited: "",
-      quota_exceeded: ""
-    };
 
     this.dom = {
       message: document.getElementById("message"),
@@ -190,10 +171,22 @@ class SetupController {
       userCooldown: document.getElementById("user-cooldown"),
       globalCooldown: document.getElementById("global-cooldown"),
 
-      // Single-Input Message Manager
-      templateSelector: document.getElementById("template-selector"),
-      activeTemplateInput: document.getElementById("active-template-input"),
-      activeTagPills: document.getElementById("active-tag-pills")
+      // Message Templates
+      msgNowPlaying: document.getElementById("message-now-playing"),
+      msgPaused: document.getElementById("message-paused"),
+      msgNothingPlaying: document.getElementById("message-nothing-playing"),
+      msgQueued: document.getElementById("message-queued"),
+      msgUsage: document.getElementById("message-usage"),
+      msgPermissionDenied: document.getElementById("message-permission-denied"),
+      msgCooldown: document.getElementById("message-cooldown"),
+      msgRequestError: document.getElementById("message-request-error"),
+      msgNoMatch: document.getElementById("message-no-match"),
+      msgNoDevice: document.getElementById("message-no-device"),
+      msgSpotifyNotConnected: document.getElementById("message-spotify-not-connected"),
+      msgSpotifyAuthExpired: document.getElementById("message-spotify-auth-expired"),
+      msgSpotifyDenied: document.getElementById("message-spotify-denied"),
+      msgRateLimited: document.getElementById("message-rate-limited"),
+      msgQuotaExceeded: document.getElementById("message-quota-exceeded")
     };
   }
 
@@ -209,7 +202,12 @@ class SetupController {
     const inputs = [
       this.dom.twitchClientId, this.dom.twitchChannel, this.dom.spotifyClientId,
       this.dom.chatEnabled, this.dom.requestsEnabled, this.dom.currentSongCommands,
-      this.dom.requestCommands, this.dom.requestRole, this.dom.userCooldown, this.dom.globalCooldown
+      this.dom.requestCommands, this.dom.requestRole, this.dom.userCooldown, this.dom.globalCooldown,
+      this.dom.msgNowPlaying, this.dom.msgPaused, this.dom.msgNothingPlaying, this.dom.msgQueued,
+      this.dom.msgUsage, this.dom.msgPermissionDenied, this.dom.msgCooldown, this.dom.msgRequestError,
+      this.dom.msgNoMatch, this.dom.msgNoDevice, this.dom.msgSpotifyNotConnected,
+      this.dom.msgSpotifyAuthExpired, this.dom.msgSpotifyDenied, this.dom.msgRateLimited,
+      this.dom.msgQuotaExceeded
     ];
 
     inputs.forEach((el) => {
@@ -218,26 +216,68 @@ class SetupController {
       el.addEventListener("change", () => this.store.setDirty(true));
     });
 
-    // Single-input template manager listeners
-    this.dom.templateSelector.addEventListener("change", () => {
-      this.saveActiveInputToMemory();
-      this.currentTemplateKey = this.dom.templateSelector.value;
-      this.loadActiveTemplateFromMemory();
+    // Message inputs preview listeners
+    const templateFields = [
+      { el: this.dom.msgNowPlaying, trigger: "!song" },
+      { el: this.dom.msgPaused, trigger: "!song (paused)" },
+      { el: this.dom.msgNothingPlaying, trigger: "!song (idle)" },
+      { el: this.dom.msgQueued, trigger: "!sr vampire" },
+      { el: this.dom.msgUsage, trigger: "!sr" },
+      { el: this.dom.msgPermissionDenied, trigger: "!sr (restricted role)" },
+      { el: this.dom.msgCooldown, trigger: "!song (cooldown)" },
+      { el: this.dom.msgRequestError, trigger: "!sr error" },
+      { el: this.dom.msgNoMatch, trigger: "!sr unknown_song" },
+      { el: this.dom.msgNoDevice, trigger: "!sr (no device)" },
+      { el: this.dom.msgSpotifyNotConnected, trigger: "!sr (not connected)" },
+      { el: this.dom.msgSpotifyAuthExpired, trigger: "!sr (auth expired)" },
+      { el: this.dom.msgSpotifyDenied, trigger: "!sr (denied)" },
+      { el: this.dom.msgRateLimited, trigger: "!song (rate limited)" },
+      { el: this.dom.msgQuotaExceeded, trigger: "!sr (quota exceeded)" }
+    ];
+
+    templateFields.forEach(({ el, trigger }) => {
+      if (!el) return;
+      el.addEventListener("focus", () => this.updateLivePreview(el.value, trigger));
+      el.addEventListener("input", () => this.updateLivePreview(el.value, trigger));
     });
 
-    this.dom.activeTemplateInput.addEventListener("input", () => {
-      this.messages[this.currentTemplateKey] = this.dom.activeTemplateInput.value;
-      this.store.setDirty(true);
-      this.updateLivePreview();
-    });
-
-    // Category Filter Pills
+    // Category Tabs (No "All Events")
     document.querySelectorAll(".cat-pill").forEach((pill) => {
       pill.addEventListener("click", () => {
         document.querySelectorAll(".cat-pill").forEach((p) => p.classList.remove("active"));
+        document.querySelectorAll(".template-tab-panel").forEach((panel) => panel.classList.remove("active"));
         pill.classList.add("active");
-        const category = pill.getAttribute("data-cat");
-        this.filterCategoryOptgroups(category);
+        const targetTabId = pill.getAttribute("data-tab");
+        const targetPanel = document.getElementById(targetTabId);
+        if (targetPanel) {
+          targetPanel.classList.add("active");
+          const firstInput = targetPanel.querySelector("input");
+          const firstField = targetPanel.querySelector(".field");
+          const trigger = firstField ? firstField.getAttribute("data-trigger") || "!song" : "!song";
+          if (firstInput) {
+            this.updateLivePreview(firstInput.value, trigger);
+          }
+        }
+      });
+    });
+
+    // Click-to-insert placeholder tag pills
+    document.querySelectorAll(".tag-pill").forEach((pill) => {
+      pill.addEventListener("click", () => {
+        const token = pill.getAttribute("data-insert");
+        const parentField = pill.closest(".field");
+        const input = parentField ? parentField.querySelector("input") : null;
+        const trigger = parentField ? parentField.getAttribute("data-trigger") || "!song" : "!song";
+        if (input && token) {
+          const start = input.selectionStart ?? input.value.length;
+          const end = input.selectionEnd ?? input.value.length;
+          const text = input.value;
+          input.value = text.substring(0, start) + token + text.substring(end);
+          input.selectionStart = input.selectionEnd = start + token.length;
+          input.focus();
+          this.store.setDirty(true);
+          this.updateLivePreview(input.value, trigger);
+        }
       });
     });
 
@@ -272,85 +312,10 @@ class SetupController {
     });
   }
 
-  filterCategoryOptgroups(category) {
-    const optgroups = this.dom.templateSelector.querySelectorAll("optgroup");
-    let firstVisibleOption = null;
-
-    optgroups.forEach((group) => {
-      const groupCat = group.getAttribute("data-group");
-      const match = category === "all" || groupCat === category;
-      group.style.display = match ? "" : "none";
-      if (match && !firstVisibleOption) {
-        firstVisibleOption = group.querySelector("option");
-      }
-    });
-
-    if (firstVisibleOption) {
-      this.saveActiveInputToMemory();
-      this.dom.templateSelector.value = firstVisibleOption.value;
-      this.currentTemplateKey = firstVisibleOption.value;
-      this.loadActiveTemplateFromMemory();
-    }
-  }
-
-  saveActiveInputToMemory() {
-    this.messages[this.currentTemplateKey] = this.dom.activeTemplateInput.value;
-  }
-
-  loadActiveTemplateFromMemory() {
-    this.dom.activeTemplateInput.value = this.messages[this.currentTemplateKey] || "";
-    this.renderTokenPills();
-    this.updateLivePreview();
-  }
-
-  renderTokenPills() {
-    const selectedOption = this.dom.templateSelector.selectedOptions[0];
-    const tokensAttr = selectedOption ? selectedOption.getAttribute("data-tokens") : "";
-    const container = this.dom.activeTagPills;
-    container.innerHTML = "";
-
-    if (!tokensAttr) return;
-
-    const tokens = tokensAttr.split(",").map((t) => t.trim()).filter(Boolean);
-    tokens.forEach((token) => {
-      const pill = document.createElement("span");
-      pill.className = "tag-pill";
-      pill.textContent = `+${token}`;
-      pill.title = `Insert ${token}`;
-      pill.addEventListener("click", () => {
-        const input = this.dom.activeTemplateInput;
-        const start = input.selectionStart ?? input.value.length;
-        const end = input.selectionEnd ?? input.value.length;
-        const text = input.value;
-        input.value = text.substring(0, start) + token + text.substring(end);
-        input.selectionStart = input.selectionEnd = start + token.length;
-        input.focus();
-        this.messages[this.currentTemplateKey] = input.value;
-        this.store.setDirty(true);
-        this.updateLivePreview();
-      });
-      container.appendChild(pill);
-    });
-  }
-
-  updateLivePreview() {
-    const rawText = this.messages[this.currentTemplateKey] || "";
+  updateLivePreview(rawText = "", trigger = "!song") {
     this.dom.previewBotName.textContent = `${this.activeBotName}:`;
-
-    // Contextual simulated command
-    let triggerCmd = "!song";
-    if (this.currentTemplateKey === "queued" || this.currentTemplateKey === "no_match" || this.currentTemplateKey === "request_error") {
-      triggerCmd = "!sr vampire";
-    } else if (this.currentTemplateKey === "usage") {
-      triggerCmd = "!sr";
-    } else if (this.currentTemplateKey === "cooldown") {
-      triggerCmd = "!song (too fast)";
-    } else if (this.currentTemplateKey === "permission_denied") {
-      triggerCmd = "!sr (viewer role)";
-    }
-
-    this.dom.simUserCmd.textContent = triggerCmd;
-    this.dom.simTriggerLabel.textContent = `Trigger: ${triggerCmd}`;
+    this.dom.simUserCmd.textContent = trigger;
+    this.dom.simTriggerLabel.textContent = `Trigger: ${trigger}`;
 
     if (!rawText.trim()) {
       this.dom.previewBotText.innerHTML = `<em>(Message is blank / silenced in chat)</em>`;
@@ -405,11 +370,23 @@ class SetupController {
     this.dom.globalCooldown.value = settings.chat?.request_global_cooldown_secs ?? 5;
 
     const msgs = settings.chat?.messages || {};
-    Object.keys(this.messages).forEach((key) => {
-      this.messages[key] = msgs[key] || "";
-    });
+    this.dom.msgNowPlaying.value = msgs.now_playing || "";
+    this.dom.msgPaused.value = msgs.paused || "";
+    this.dom.msgNothingPlaying.value = msgs.nothing_playing || "";
+    this.dom.msgQueued.value = msgs.queued || "";
+    this.dom.msgUsage.value = msgs.usage || "";
+    this.dom.msgPermissionDenied.value = msgs.permission_denied || "";
+    this.dom.msgCooldown.value = msgs.cooldown || "";
+    this.dom.msgRequestError.value = msgs.request_error || "";
+    this.dom.msgNoMatch.value = msgs.no_match || "";
+    this.dom.msgNoDevice.value = msgs.no_device || "";
+    this.dom.msgSpotifyNotConnected.value = msgs.spotify_not_connected || "";
+    this.dom.msgSpotifyAuthExpired.value = msgs.spotify_auth_expired || "";
+    this.dom.msgSpotifyDenied.value = msgs.spotify_denied || "";
+    this.dom.msgRateLimited.value = msgs.rate_limited || "";
+    this.dom.msgQuotaExceeded.value = msgs.quota_exceeded || "";
 
-    this.loadActiveTemplateFromMemory();
+    this.updateLivePreview(this.dom.msgNowPlaying.value, "!song");
   }
 
   renderStatus(data, overwriteSettings = false) {
@@ -468,8 +445,7 @@ class SetupController {
 
   async handleSave(showMessage = true) {
     try {
-      this.saveActiveInputToMemory();
-      const payload = this.store.toPayload(this.dom, this.messages);
+      const payload = this.store.toPayload(this.dom);
       const result = await this.api.saveSettings(payload);
       this.store.setDirty(false);
       if (showMessage) {
