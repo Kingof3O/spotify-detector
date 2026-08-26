@@ -4,7 +4,16 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: "Git ref to build (tag, branch, or commit)"
+        required: false
+        default: ""
+      release_tag:
+        description: "Release tag to publish"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -17,6 +26,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_ref || github.ref }}
 
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
@@ -45,5 +56,6 @@ jobs:
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         shell: bash
-        run: gh release create "${{ github.ref_name }}" --repo "${{ github.repository }}" --title "spotify-overlay ${{ github.ref_name }}" --generate-notes "spotify-overlay-windows-x64.zip"
+        run: gh release create "$RELEASE_TAG" --repo "${{ github.repository }}" --title "spotify-overlay $RELEASE_TAG" --generate-notes "spotify-overlay-windows-x64.zip"
