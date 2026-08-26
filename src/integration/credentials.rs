@@ -13,6 +13,8 @@ pub struct Credentials {
     pub twitch: Option<TwitchToken>,
     #[serde(default)]
     pub spotify: Option<SpotifyToken>,
+    #[serde(default)]
+    pub obs_password: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -91,6 +93,12 @@ impl CredentialStore {
     pub fn clear_spotify(&self) -> Result<(), CredentialError> {
         let mut credentials = self.load()?;
         credentials.spotify = None;
+        self.save(&credentials)
+    }
+
+    pub fn clear_obs_password(&self) -> Result<(), CredentialError> {
+        let mut credentials = self.load()?;
+        credentials.obs_password = None;
         self.save(&credentials)
     }
 }

@@ -262,6 +262,67 @@ select:focus {
   gap: 10px;
 }
 
+/* OBS + League automation cards */
+.automation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.automation-card {
+  min-width: 0;
+}
+
+.service-icon.obs {
+  background: rgba(99, 102, 241, 0.2);
+  color: #c4b5fd;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+}
+
+.service-icon.league {
+  background: rgba(236, 72, 153, 0.16);
+  color: #f9a8d4;
+  border: 1px solid rgba(236, 72, 153, 0.32);
+}
+
+.field-hint,
+.automation-runtime-status {
+  color: var(--text-muted);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.automation-runtime-status {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.advanced-settings {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.advanced-settings summary {
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  user-select: none;
+}
+
+.advanced-settings[open] summary {
+  margin-bottom: 10px;
+  color: #e9d5ff;
+}
+
+.advanced-settings .field + .field {
+  margin-top: 8px;
+}
+
 /* Category Filter Tabs for Message Studio */
 .category-pill-bar {
   display: flex;
@@ -440,6 +501,10 @@ select:focus {
   }
 
   .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .automation-grid {
     grid-template-columns: 1fr;
   }
 }

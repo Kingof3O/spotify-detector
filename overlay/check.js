@@ -93,7 +93,11 @@ class HealthCheckController {
       metricDotTwitch: document.getElementById("metric-dot-twitch"),
       metricValTwitch: document.getElementById("metric-val-twitch"),
       metricDotSpotify: document.getElementById("metric-dot-spotify"),
-      metricValSpotify: document.getElementById("metric-val-spotify")
+      metricValSpotify: document.getElementById("metric-val-spotify"),
+      metricDotObs: document.getElementById("metric-dot-obs"),
+      metricValObs: document.getElementById("metric-val-obs"),
+      metricDotLeague: document.getElementById("metric-dot-league"),
+      metricValLeague: document.getElementById("metric-val-league")
     };
   }
 
@@ -163,6 +167,23 @@ class HealthCheckController {
     if (spotifyCheck) {
       this.dom.metricDotSpotify.className = `metric-dot ${spotifyCheck.status}`;
       this.dom.metricValSpotify.textContent = spotifyCheck.status === "ok" ? "Authorized" : "Disconnected";
+    }
+
+    const obsCheck = findCheck("obs websocket");
+    const leagueCheck = findCheck("league detector") || findCheck("league → obs");
+    if (obsCheck) {
+      this.dom.metricDotObs.className = `metric-dot ${obsCheck.status}`;
+      this.dom.metricValObs.textContent = obsCheck.status === "ok" ? "Connected" : obsCheck.status === "warning" ? "Disabled" : "Offline";
+    } else {
+      this.dom.metricDotObs.className = "metric-dot warning";
+      this.dom.metricValObs.textContent = "Disabled";
+    }
+    if (leagueCheck) {
+      this.dom.metricDotLeague.className = `metric-dot ${leagueCheck.status}`;
+      this.dom.metricValLeague.textContent = leagueCheck.status === "ok" ? "Active" : leagueCheck.status === "warning" ? "Disabled" : "Needs setup";
+    } else {
+      this.dom.metricDotLeague.className = "metric-dot warning";
+      this.dom.metricValLeague.textContent = "Disabled";
     }
   }
 

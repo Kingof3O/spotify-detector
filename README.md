@@ -8,6 +8,8 @@ Spotify Desktop → Windows GSMTC events → Rust agent → localhost WebSocket 
 
 The optional chat/request integration connects a dedicated Twitch bot account and the Spotify Web API only when configured in the local setup dashboard. The OBS overlay itself uses Windows media events and does not require OAuth or cloud relays.
 
+The Stream Manager can also optionally switch OBS scenes for League of Legends. Enable OBS WebSocket and League detection from `/setup`; the detector listens to Windows window events and keeps the configured game scene during the short client-return grace period. OBS Studio 28+ with WebSocket v5 is supported. This automation is disabled by default.
+
 ---
 
 ## ✨ Features
@@ -24,6 +26,7 @@ The optional chat/request integration connects a dedicated Twitch bot account an
   - Customizable roles, user/global cooldowns, and categorized message templates with click-to-insert placeholder chips (`{user}`, `{track}`, `{artist}`, `{seconds}`).
 - **Local Health Diagnostics Dashboard (`/check`)**: Real-time status pulse ring, service summary metric tiles (Server, Media Session, Twitch, Spotify), and 1-click remediation links.
 - **Lightweight Windows System Tray**: Minimizes to the taskbar notification area with quick links to open the overlay or gracefully exit.
+- **Optional League → OBS Automation**: Event-driven League game/client detection with configurable scenes, grace period, foreground policy, and OBS reconnect handling.
 
 ---
 
@@ -57,11 +60,13 @@ For the released executable:
 
 ## ⚙️ Optional Twitch & Spotify Integration
 
-Right-click the system tray icon and select **Setup Twitch & Spotify**, or open [http://127.0.0.1:18923/setup](http://127.0.0.1:18923/setup):
+Right-click the system tray icon and select **Open Stream Manager Setup**, or open [http://127.0.0.1:18923/setup](http://127.0.0.1:18923/setup):
 
 1. **Twitch Bot**: Enter your Twitch Developer Client ID, target channel, and authorize the bot via Device Code flow. Make the bot a moderator in your channel.
 2. **Spotify API**: Enter your Spotify Developer Client ID, add the 1-click copied Redirect URI (`http://127.0.0.1:18923/auth/spotify/callback`) to your Spotify Developer Dashboard, and authorize.
 3. **Commands & Customization**: Configure aliases (`!song`, `!sr`), roles (Everyone, Sub, VIP, Mod), cooldowns, and customizable message templates.
+
+4. **League → OBS scenes (optional)**: Enable OBS WebSocket and League detection in the same dashboard. Set the Game, Client, and Idle scene names, choose a transition grace period, and optionally require League to be foreground. OBS Studio 28+ with WebSocket v5 is required; the OBS password is stored with Windows DPAPI and never written to `config.json`.
 
 All sensitive tokens are stored locally and encrypted using **Windows DPAPI** (`%LOCALAPPDATA%\SpotifyOverlay`).
 
@@ -114,6 +119,7 @@ spotify-detector/
 │   └── overlay.js                # Overlay animation & WebSocket client
 ├── src/                          # Rust Backend
 │   ├── app/                      # Main application loop & tray controls
+│   ├── automation/               # League window events, state machine & OBS v5 adapter
 │   ├── chat/                     # Twitch EventSub WebSocket & command processor
 │   ├── config/                   # Local configuration & DPAPI credential storage
 │   ├── integration/              # Twitch & Spotify OAuth API services

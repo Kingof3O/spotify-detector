@@ -1,5 +1,6 @@
 use tokio::sync::watch;
 
+use crate::automation::AutomationState;
 use crate::config::Config;
 use crate::integration::IntegrationState;
 use crate::media::{ArtworkStore, MediaState};
@@ -11,6 +12,7 @@ pub struct AppState {
     pub(crate) shutdown: watch::Sender<bool>,
     pub(crate) config: watch::Sender<Config>,
     pub(crate) integration: IntegrationState,
+    pub(crate) automation: AutomationState,
     pub(crate) overlay_url: String,
 }
 
@@ -21,6 +23,7 @@ impl AppState {
         shutdown: watch::Sender<bool>,
         config: watch::Sender<Config>,
         integration: IntegrationState,
+        automation: AutomationState,
         overlay_url: String,
     ) -> Self {
         Self {
@@ -29,6 +32,7 @@ impl AppState {
             shutdown,
             config,
             integration,
+            automation,
             overlay_url,
         }
     }

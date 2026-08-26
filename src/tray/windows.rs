@@ -154,7 +154,7 @@ fn create_menu() -> Result<HMENU> {
     let menu = unsafe { CreatePopupMenu() }?;
     let result = unsafe {
         AppendMenuW(menu, MF_STRING, MENU_OPEN_OVERLAY, w!("Open overlay"))
-            .and_then(|_| AppendMenuW(menu, MF_STRING, MENU_SETUP, w!("Setup Twitch & Spotify")))
+            .and_then(|_| AppendMenuW(menu, MF_STRING, MENU_SETUP, w!("Open Stream Manager Setup")))
             .and_then(|_| AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null()))
             .and_then(|_| AppendMenuW(menu, MF_STRING, MENU_STOP, w!("Stop Spotify Overlay")))
     };

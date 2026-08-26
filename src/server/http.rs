@@ -10,7 +10,8 @@ use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 
 use crate::{
-    config::{ChatConfig, Config},
+    automation::AutomationStatus,
+    config::{ChatConfig, Config, LeagueConfig, ObsConfig},
     integration::{
         CredentialError, DevicePoll, IntegrationStatus, PlaybackStatus, SpotifyApi, SpotifyError,
         TwitchApi, TwitchDeviceStatus, TwitchError,
@@ -169,6 +170,7 @@ struct HealthResponse {
     status: &'static str,
     available: bool,
     source: Option<String>,
+    automation: AutomationStatus,
 }
 
 async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
@@ -177,6 +179,7 @@ async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
         status: "ok",
         available: current.available,
         source: current.source,
+        automation: state.automation.snapshot().await,
     })
 }
 
@@ -426,6 +429,125 @@ async fn health_check(
         ),
     }
 
+    let automation = state.automation.snapshot().await;
+    if !config.obs.enabled || !config.league.enabled {
+        add_check(
+            &mut checks,
+            "League → OBS automation",
+            "warning",
+            "League scene automation is disabled in setup.".to_owned(),
+            Some("Enable OBS and League automation in setup.".to_owned()),
+        );
+    } else {
+        if automation.obs_connected {
+            add_check(
+                &mut checks,
+                "OBS WebSocket",
+                "ok",
+                format!(
+                    "Connected to OBS {}{}.",
+                    automation
+                        .obs_version
+                        .as_deref()
+                        .map(|version| format!("v{version}"))
+                        .unwrap_or_else(|| "WebSocket v5".to_owned()),
+                    automation
+                        .obs_current_scene
+                        .as_deref()
+                        .map(|scene| format!("; current scene: {scene}"))
+                        .unwrap_or_default()
+                ),
+                None,
+            );
+        } else {
+            add_check(
+                &mut checks,
+                "OBS WebSocket",
+                "error",
+                automation
+                    .obs_last_error
+                    .clone()
+                    .unwrap_or_else(|| "OBS WebSocket is not connected.".to_owned()),
+                Some("Start OBS and check its WebSocket v5 settings.".to_owned()),
+            );
+        }
+
+        let missing_scenes = [
+            ("game", config.league.game_scene.as_str()),
+            ("client", config.league.client_scene.as_str()),
+            ("idle", config.league.idle_scene.as_str()),
+        ]
+        .into_iter()
+        .filter(|(_, scene)| {
+            !automation
+                .obs_scenes
+                .iter()
+                .any(|candidate| candidate == *scene)
+        })
+        .map(|(kind, scene)| format!("{kind}='{scene}'"))
+        .collect::<Vec<_>>();
+        if !automation.obs_connected {
+            add_check(
+                &mut checks,
+                "OBS scene names",
+                "warning",
+                "Scene list will be validated after OBS connects.".to_owned(),
+                Some("Start OBS and refresh this check.".to_owned()),
+            );
+        } else if !missing_scenes.is_empty() {
+            add_check(
+                &mut checks,
+                "OBS scene names",
+                "error",
+                format!(
+                    "Configured scenes are missing: {}.",
+                    missing_scenes.join(", ")
+                ),
+                Some("Create or rename the scenes in OBS, then refresh this check.".to_owned()),
+            );
+        } else {
+            add_check(
+                &mut checks,
+                "OBS scene names",
+                "ok",
+                "All configured League scenes are present in OBS.".to_owned(),
+                None,
+            );
+        }
+
+        add_check(
+            &mut checks,
+            "League detector",
+            if !cfg!(windows) {
+                "error"
+            } else if automation.league_state == crate::automation::LeagueState::Unknown {
+                "warning"
+            } else {
+                "ok"
+            },
+            format!(
+                "{}State: {}; game window {}; client window {}.",
+                if !cfg!(windows) {
+                    "Windows League detection is unavailable on this platform. "
+                } else {
+                    ""
+                },
+                automation.league_state,
+                if automation.league_game_present {
+                    "detected"
+                } else {
+                    "not detected"
+                },
+                if automation.league_client_present {
+                    "detected"
+                } else {
+                    "not detected"
+                }
+            ),
+            Some("Launch League or review the advanced process signatures in setup.".to_owned()),
+        );
+    }
+
     let overall = if checks.iter().any(|check| check.status == "error") {
         "error"
     } else if checks.iter().any(|check| check.status == "warning") {
@@ -494,6 +616,14 @@ struct SetupSettings {
     twitch_channel: String,
     spotify_client_id: String,
     chat: ChatConfig,
+    #[serde(default)]
+    obs: ObsConfig,
+    #[serde(default)]
+    league: LeagueConfig,
+    #[serde(default, skip_serializing)]
+    obs_password: Option<String>,
+    #[serde(default, skip_serializing)]
+    clear_obs_password: bool,
 }
 
 impl SetupSettings {
@@ -503,6 +633,10 @@ impl SetupSettings {
             twitch_channel: config.integrations.twitch_channel.clone(),
             spotify_client_id: config.integrations.spotify_client_id.clone(),
             chat: config.integrations.chat.clone(),
+            obs: config.obs.clone(),
+            league: config.league.clone(),
+            obs_password: None,
+            clear_obs_password: false,
         }
     }
 
@@ -511,6 +645,38 @@ impl SetupSettings {
         config.integrations.twitch_channel = self.twitch_channel.trim().to_ascii_lowercase();
         config.integrations.spotify_client_id = self.spotify_client_id.trim().to_owned();
         config.integrations.chat = self.chat.clone();
+        config.obs = self.obs.clone();
+        config.obs.host = config.obs.host.trim().to_owned();
+        config.league = self.league.clone();
+        config.league.game_scene = config.league.game_scene.trim().to_owned();
+        config.league.client_scene = config.league.client_scene.trim().to_owned();
+        config.league.idle_scene = config.league.idle_scene.trim().to_owned();
+        config.league.game_process_names = config
+            .league
+            .game_process_names
+            .iter()
+            .map(|value| value.trim().to_owned())
+            .collect();
+        config.league.client_process_names = config
+            .league
+            .client_process_names
+            .iter()
+            .map(|value| value.trim().to_owned())
+            .collect();
+        config.league.client_window_classes = config
+            .league
+            .client_window_classes
+            .iter()
+            .map(|value| value.trim().to_owned())
+            .filter(|value| !value.is_empty())
+            .collect();
+        config.league.client_window_title_patterns = config
+            .league
+            .client_window_title_patterns
+            .iter()
+            .map(|value| value.trim().to_owned())
+            .filter(|value| !value.is_empty())
+            .collect();
     }
 }
 
@@ -520,6 +686,8 @@ struct SetupStatusResponse {
     settings: SetupSettings,
     status: IntegrationStatus,
     twitch_device: Option<TwitchDeviceStatus>,
+    automation: AutomationStatus,
+    obs_password_set: bool,
 }
 
 #[derive(Serialize)]
@@ -548,7 +716,7 @@ struct SpotifyCallbackQuery {
 async fn setup_status(State(state): State<AppState>) -> Json<SetupStatusResponse> {
     let config = state.config_snapshot();
     let mut status = state.integration.status.read().await.clone();
-    if let Ok(credentials) = state.integration.credentials.load() {
+    let obs_password_set = if let Ok(credentials) = state.integration.credentials.load() {
         if credentials.twitch.is_none() {
             status.twitch_connected = false;
             status.twitch_user = None;
@@ -559,7 +727,10 @@ async fn setup_status(State(state): State<AppState>) -> Json<SetupStatusResponse
             status.twitch_status = "authorized_waiting_for_chat".to_owned();
         }
         status.spotify_connected = credentials.spotify.is_some();
-    }
+        credentials.obs_password.is_some()
+    } else {
+        false
+    };
     let twitch_device = state
         .integration
         .twitch_device
@@ -571,6 +742,8 @@ async fn setup_status(State(state): State<AppState>) -> Json<SetupStatusResponse
         settings: SetupSettings::from_config(&config),
         status,
         twitch_device,
+        automation: state.automation.snapshot().await,
+        obs_password_set,
     })
 }
 
@@ -596,6 +769,27 @@ async fn save_settings(
     settings.apply_to(&mut config);
     config.validate_for_setup().map_err(config_error)?;
     config.save().map_err(config_error)?;
+    if settings.clear_obs_password {
+        state
+            .integration
+            .credentials
+            .clear_obs_password()
+            .map_err(storage_error)?;
+    } else if let Some(password) = settings.obs_password.as_deref() {
+        if !password.is_empty() {
+            let mut credentials = state
+                .integration
+                .credentials
+                .load()
+                .map_err(storage_error)?;
+            credentials.obs_password = Some(password.to_owned());
+            state
+                .integration
+                .credentials
+                .save(&credentials)
+                .map_err(storage_error)?;
+        }
+    }
     let response = SetupSettings::from_config(&config);
     let _ = state.config.send(config);
     state.integration.signal_change();

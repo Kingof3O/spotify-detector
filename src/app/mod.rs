@@ -19,6 +19,8 @@ pub async fn run(config: Config) -> Result<(), AppError> {
     let (state_tx, state_rx) = tokio::sync::watch::channel(MediaState::unavailable(0));
     let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
     let (config_tx, _config_rx) = tokio::sync::watch::channel(config.clone());
+    let automation_state = crate::automation::AutomationState::new();
+    let integration = IntegrationState::new();
 
     let _media_thread = crate::media::spawn_monitor(
         state_tx,
@@ -35,12 +37,20 @@ pub async fn run(config: Config) -> Result<(), AppError> {
     let setup_url = format!("{overlay_url}setup");
     let _tray_thread = crate::tray::spawn(overlay_url.clone(), setup_url, shutdown_tx.clone());
 
+    let _automation_handles = crate::automation::spawn(
+        config_tx.subscribe(),
+        shutdown_tx.subscribe(),
+        integration.credentials.clone(),
+        automation_state.clone(),
+    );
+
     let server_state = AppState::new(
         state_rx,
         artwork,
         shutdown_tx,
         config_tx,
-        IntegrationState::new(),
+        integration,
+        automation_state,
         overlay_url,
     );
     let _chat_task = crate::chat::spawn(server_state.clone());
