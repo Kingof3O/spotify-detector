@@ -70,7 +70,6 @@ class SettingsStore {
   constructor(onDirtyChange) {
     this.onDirtyChange = onDirtyChange;
     this.isDirty = false;
-    this.clearObsPassword = false;
   }
 
   setDirty(dirty) {
@@ -92,28 +91,6 @@ class SettingsStore {
       twitch_client_id: dom.twitchClientId.value.trim(),
       twitch_channel: dom.twitchChannel.value.trim(),
       spotify_client_id: dom.spotifyClientId.value.trim(),
-      obs: {
-        enabled: dom.obsEnabled.checked,
-        host: dom.obsHost.value.trim(),
-        port: Number(dom.obsPort.value),
-        reconnect_min_ms: Number(dom.obsReconnectMin.value),
-        reconnect_max_ms: Number(dom.obsReconnectMax.value),
-        manual_scene_policy: dom.obsManualPolicy.value
-      },
-      league: {
-        enabled: dom.leagueEnabled.checked,
-        game_scene: dom.leagueGameScene.value.trim(),
-        client_scene: dom.leagueClientScene.value.trim(),
-        idle_scene: dom.leagueIdleScene.value.trim(),
-        transition_grace_ms: Number(dom.leagueGrace.value),
-        require_foreground: dom.leagueForeground.checked,
-        game_process_names: SettingsStore.parseAliases(dom.leagueGameProcesses.value),
-        client_process_names: SettingsStore.parseAliases(dom.leagueClientProcesses.value),
-        client_window_classes: SettingsStore.parseAliases(dom.leagueClientClasses.value),
-        client_window_title_patterns: SettingsStore.parseAliases(dom.leagueClientTitles.value)
-      },
-      obs_password: this.clearObsPassword ? "" : dom.obsPassword.value,
-      clear_obs_password: this.clearObsPassword,
       chat: {
         enabled: dom.chatEnabled.checked,
         requests_enabled: dom.requestsEnabled.checked,
@@ -185,30 +162,6 @@ class SetupController {
       spotifyConnectBtn: document.getElementById("spotify-connect"),
       spotifyDisconnectBtn: document.getElementById("spotify-disconnect"),
 
-      // OBS + League automation
-      obsEnabled: document.getElementById("obs-enabled"),
-      obsHost: document.getElementById("obs-host"),
-      obsPort: document.getElementById("obs-port"),
-      obsPassword: document.getElementById("obs-password"),
-      obsPasswordStatus: document.getElementById("obs-password-status"),
-      obsClearPassword: document.getElementById("obs-clear-password"),
-      obsManualPolicy: document.getElementById("obs-manual-policy"),
-      obsReconnectMin: document.getElementById("obs-reconnect-min"),
-      obsReconnectMax: document.getElementById("obs-reconnect-max"),
-      obsStatus: document.getElementById("obs-status"),
-      leagueEnabled: document.getElementById("league-enabled"),
-      leagueGameScene: document.getElementById("league-game-scene"),
-      leagueClientScene: document.getElementById("league-client-scene"),
-      leagueIdleScene: document.getElementById("league-idle-scene"),
-      leagueGrace: document.getElementById("league-grace"),
-      leagueForeground: document.getElementById("league-foreground"),
-      leagueGameProcesses: document.getElementById("league-game-processes"),
-      leagueClientProcesses: document.getElementById("league-client-processes"),
-      leagueClientClasses: document.getElementById("league-client-classes"),
-      leagueClientTitles: document.getElementById("league-client-titles"),
-      leagueStatus: document.getElementById("league-status"),
-      leagueRuntimeStatus: document.getElementById("league-runtime-status"),
-
       // Chat & Song Requests
       chatEnabled: document.getElementById("chat-enabled"),
       requestsEnabled: document.getElementById("requests-enabled"),
@@ -257,29 +210,10 @@ class SetupController {
       this.dom.msgQuotaExceeded
     ];
 
-    inputs.push(
-      this.dom.obsEnabled, this.dom.obsHost, this.dom.obsPort, this.dom.obsPassword,
-      this.dom.obsManualPolicy, this.dom.obsReconnectMin, this.dom.obsReconnectMax,
-      this.dom.leagueEnabled, this.dom.leagueGameScene,
-      this.dom.leagueClientScene, this.dom.leagueIdleScene, this.dom.leagueGrace,
-      this.dom.leagueForeground, this.dom.leagueGameProcesses, this.dom.leagueClientProcesses,
-      this.dom.leagueClientClasses, this.dom.leagueClientTitles
-    );
-
     inputs.forEach((el) => {
       if (!el) return;
       el.addEventListener("input", () => this.store.setDirty(true));
       el.addEventListener("change", () => this.store.setDirty(true));
-    });
-
-    this.dom.obsPassword.addEventListener("input", () => {
-      this.store.clearObsPassword = false;
-    });
-    this.dom.obsClearPassword.addEventListener("click", () => {
-      this.store.clearObsPassword = true;
-      this.dom.obsPassword.value = "";
-      this.store.setDirty(true);
-      this.showMessage("The saved OBS password will be cleared when you save.");
     });
 
     // Message inputs preview listeners
@@ -423,30 +357,9 @@ class SetupController {
   }
 
   populateForm(settings) {
-    this.store.clearObsPassword = false;
     this.dom.twitchClientId.value = settings.twitch_client_id || "";
     this.dom.twitchChannel.value = settings.twitch_channel || "";
     this.dom.spotifyClientId.value = settings.spotify_client_id || "";
-
-    const obs = settings.obs || {};
-    const league = settings.league || {};
-    this.dom.obsEnabled.checked = Boolean(obs.enabled);
-    this.dom.obsHost.value = obs.host || "127.0.0.1";
-    this.dom.obsPort.value = obs.port ?? 4455;
-    this.dom.obsReconnectMin.value = obs.reconnect_min_ms ?? 500;
-    this.dom.obsReconnectMax.value = obs.reconnect_max_ms ?? 10000;
-    this.dom.obsPassword.value = "";
-    this.dom.obsManualPolicy.value = obs.manual_scene_policy || "respect";
-    this.dom.leagueEnabled.checked = Boolean(league.enabled);
-    this.dom.leagueGameScene.value = league.game_scene || "League Game";
-    this.dom.leagueClientScene.value = league.client_scene || "League Client";
-    this.dom.leagueIdleScene.value = league.idle_scene || "Default";
-    this.dom.leagueGrace.value = league.transition_grace_ms ?? 2000;
-    this.dom.leagueForeground.checked = Boolean(league.require_foreground);
-    this.dom.leagueGameProcesses.value = (league.game_process_names || ["League of Legends.exe"]).join(", ");
-    this.dom.leagueClientProcesses.value = (league.client_process_names || ["LeagueClient.exe", "LeagueClientUx.exe"]).join(", ");
-    this.dom.leagueClientClasses.value = (league.client_window_classes || []).join(", ");
-    this.dom.leagueClientTitles.value = (league.client_window_title_patterns || []).join(", ");
 
     this.dom.chatEnabled.checked = Boolean(settings.chat?.enabled);
     this.dom.requestsEnabled.checked = Boolean(settings.chat?.requests_enabled);
@@ -512,34 +425,6 @@ class SetupController {
       this.dom.twitchDevice.textContent = `Authorize at ${data.twitch_device.verification_uri} with code ${data.twitch_device.user_code}.`;
     } else {
       this.dom.twitchDevice.textContent = "";
-    }
-
-    const automation = data.automation || {};
-    const obsConnected = Boolean(automation.obs_connected);
-    const obsEnabled = Boolean(automation.obs_enabled);
-    this.setStatusBadge(
-      this.dom.obsStatus,
-      !obsEnabled ? "Disabled" : (obsConnected ? "Connected" : (automation.obs_status || "Connecting")),
-      obsEnabled && !obsConnected && String(automation.obs_status || "").startsWith("error")
-    );
-    this.dom.obsPasswordStatus.textContent = data.obs_password_set
-      ? "A password is saved securely on this computer"
-      : "No password saved";
-
-    const leagueEnabled = Boolean(data.settings?.league?.enabled);
-    this.setStatusBadge(
-      this.dom.leagueStatus,
-      !leagueEnabled ? "Disabled" : (automation.league_state || "Starting"),
-      false
-    );
-    if (automation.league_state) {
-      const parts = [`State: ${automation.league_state}`];
-      if (automation.league_pending_transition_ms != null) {
-        parts.push(`transition in ${automation.league_pending_transition_ms}ms`);
-      }
-      if (automation.league_last_signal) parts.push(`last signal: ${automation.league_last_signal}`);
-      if (automation.obs_current_scene) parts.push(`OBS: ${automation.obs_current_scene}`);
-      this.dom.leagueRuntimeStatus.textContent = parts.join(" · ");
     }
 
     if (data.status?.last_error) {

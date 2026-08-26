@@ -77,6 +77,7 @@ All sensitive tokens are stored locally and encrypted using **Windows DPAPI** (`
 ```text
 GET http://127.0.0.1:18923/               # Transparent OBS Overlay
 GET http://127.0.0.1:18923/setup          # Configuration Dashboard
+GET http://127.0.0.1:18923/automation     # OBS & League Scene Automation
 GET http://127.0.0.1:18923/check          # Live Diagnostics & Health Checks
 GET http://127.0.0.1:18923/test           # Visual Overlay Preview & Marquee Tester
 GET http://127.0.0.1:18923/health         # JSON Health Status

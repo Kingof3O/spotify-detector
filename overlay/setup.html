@@ -26,6 +26,10 @@
             <i class="fa-solid fa-heart-pulse"></i>
             <span>Diagnostics</span>
           </a>
+          <a href="/automation" class="nav-pill">
+            <i class="fa-solid fa-gamepad"></i>
+            <span>OBS &amp; League</span>
+          </a>
           <a href="/" target="_blank" class="nav-pill">
             <i class="fa-solid fa-layer-group"></i>
             <span>Live Overlay</span>
@@ -388,115 +392,6 @@
         </div>
       </div>
 
-      <!-- OPTIONAL OBS + LEAGUE AUTOMATION -->
-      <section class="automation-grid">
-        <section class="card automation-card">
-          <div class="card-header">
-            <div class="card-title-group">
-              <div class="service-icon obs"><i class="fa-solid fa-tower-broadcast"></i></div>
-              <h2 class="card-title">OBS Scene Automation</h2>
-            </div>
-            <span id="obs-status" class="status-badge">Disabled</span>
-          </div>
-
-          <div class="switch-row">
-            <label for="obs-enabled" class="switch-label">
-              <span class="switch-title">Enable OBS WebSocket</span>
-              <span class="switch-desc">Switch scenes when League changes state</span>
-            </label>
-            <label class="switch">
-              <input id="obs-enabled" type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <div class="grid-2">
-            <div class="field">
-              <label for="obs-host">OBS host</label>
-              <input id="obs-host" type="text" placeholder="127.0.0.1" autocomplete="off" spellcheck="false" />
-            </div>
-            <div class="field">
-              <label for="obs-port">WebSocket port</label>
-              <input id="obs-port" type="number" min="1" max="65535" />
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="obs-password">OBS WebSocket password</label>
-            <div class="input-wrapper">
-              <input id="obs-password" type="password" placeholder="Leave blank to keep the saved password" autocomplete="new-password" />
-              <button type="button" class="field-btn" data-toggle="obs-password" title="Toggle visibility"><i class="fa-solid fa-eye"></i></button>
-            </div>
-            <small id="obs-password-status" class="field-hint">No password saved</small>
-          </div>
-
-          <div class="field">
-            <label for="obs-manual-policy">Manual scene changes</label>
-            <select id="obs-manual-policy">
-              <option value="respect">Respect manual changes</option>
-              <option value="enforce">Enforce League scene</option>
-            </select>
-          </div>
-          <details class="advanced-settings">
-            <summary>Advanced connection settings</summary>
-            <div class="grid-2">
-              <div class="field"><label for="obs-reconnect-min">Reconnect minimum (ms)</label><input id="obs-reconnect-min" type="number" min="100" max="300000" /></div>
-              <div class="field"><label for="obs-reconnect-max">Reconnect maximum (ms)</label><input id="obs-reconnect-max" type="number" min="100" max="300000" /></div>
-            </div>
-          </details>
-          <button id="obs-clear-password" type="button" class="btn-secondary">Clear saved password</button>
-        </section>
-
-        <section class="card automation-card">
-          <div class="card-header">
-            <div class="card-title-group">
-              <div class="service-icon league"><i class="fa-solid fa-gamepad"></i></div>
-              <h2 class="card-title">League of Legends</h2>
-            </div>
-            <span id="league-status" class="status-badge">Disabled</span>
-          </div>
-
-          <div class="switch-row">
-            <label for="league-enabled" class="switch-label">
-              <span class="switch-title">Enable League detection</span>
-              <span class="switch-desc">Use Windows window events to choose scenes</span>
-            </label>
-            <label class="switch">
-              <input id="league-enabled" type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <div class="grid-2">
-            <div class="field"><label for="league-game-scene">Game scene</label><input id="league-game-scene" type="text" /></div>
-            <div class="field"><label for="league-client-scene">Client scene</label><input id="league-client-scene" type="text" /></div>
-          </div>
-          <div class="grid-2">
-            <div class="field"><label for="league-idle-scene">Idle/default scene</label><input id="league-idle-scene" type="text" /></div>
-            <div class="field"><label for="league-grace">Transition grace (ms)</label><input id="league-grace" type="number" min="0" max="300000" /></div>
-          </div>
-
-          <div class="switch-row">
-            <label for="league-foreground" class="switch-label">
-              <span class="switch-title">Require foreground window</span>
-              <span class="switch-desc">Only count League when it is the active window</span>
-            </label>
-            <label class="switch">
-              <input id="league-foreground" type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <details class="advanced-settings">
-            <summary>Advanced process/window signatures</summary>
-            <div class="field"><label for="league-game-processes">Game process names</label><input id="league-game-processes" type="text" placeholder="League of Legends.exe" /></div>
-            <div class="field"><label for="league-client-processes">Client process names</label><input id="league-client-processes" type="text" placeholder="LeagueClient.exe, LeagueClientUx.exe" /></div>
-            <div class="field"><label for="league-client-classes">Client window classes (optional)</label><input id="league-client-classes" type="text" placeholder="Leave blank for any class" /></div>
-            <div class="field"><label for="league-client-titles">Client title fragments (optional)</label><input id="league-client-titles" type="text" placeholder="Leave blank for any title" /></div>
-          </details>
-          <div id="league-runtime-status" class="automation-runtime-status">Detector is idle until enabled.</div>
-        </section>
-      </section>
     </main>
 
     <script src="/setup.js"></script>

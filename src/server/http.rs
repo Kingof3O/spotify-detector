@@ -24,10 +24,13 @@ const INDEX_HTML: &str = include_str!("../../overlay/index.html");
 const TEST_HTML: &str = include_str!("../../overlay/test.html");
 const TEST_ARTWORK_SVG: &str = include_str!("../../overlay/test-artwork.svg");
 const SETUP_HTML: &str = include_str!("../../overlay/setup.html");
+const AUTOMATION_HTML: &str = include_str!("../../overlay/automation.html");
 const CHECK_HTML: &str = include_str!("../../overlay/check.html");
 const THEME_CSS: &str = include_str!("../../overlay/theme.css");
 const SETUP_CSS: &str = include_str!("../../overlay/setup.css");
 const SETUP_JS: &str = include_str!("../../overlay/setup.js");
+const AUTOMATION_CSS: &str = include_str!("../../overlay/automation.css");
+const AUTOMATION_JS: &str = include_str!("../../overlay/automation.js");
 const CHECK_CSS: &str = include_str!("../../overlay/check.css");
 const CHECK_JS: &str = include_str!("../../overlay/check.js");
 const OVERLAY_CSS: &str = include_str!("../../overlay/overlay.css");
@@ -38,11 +41,14 @@ pub fn router(state: AppState) -> Router {
         .route("/", get(index))
         .route("/test", get(test))
         .route("/setup", get(setup))
+        .route("/automation", get(automation))
         .route("/check", get(check))
         .route("/test-artwork.svg", get(test_artwork))
         .route("/theme.css", get(theme_css))
         .route("/setup.css", get(setup_css))
         .route("/setup.js", get(setup_js))
+        .route("/automation.css", get(automation_css))
+        .route("/automation.js", get(automation_js))
         .route("/check.css", get(check_css))
         .route("/check.js", get(check_js))
         .route("/overlay.css", get(overlay_css))
@@ -73,6 +79,10 @@ async fn test() -> axum::response::Html<&'static str> {
 
 async fn setup() -> axum::response::Html<&'static str> {
     axum::response::Html(SETUP_HTML)
+}
+
+async fn automation() -> axum::response::Html<&'static str> {
+    axum::response::Html(AUTOMATION_HTML)
 }
 
 async fn check() -> axum::response::Html<&'static str> {
@@ -122,6 +132,26 @@ async fn setup_js() -> impl IntoResponse {
             HeaderValue::from_static("text/javascript; charset=utf-8"),
         )],
         SETUP_JS,
+    )
+}
+
+async fn automation_css() -> impl IntoResponse {
+    (
+        [(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("text/css; charset=utf-8"),
+        )],
+        AUTOMATION_CSS,
+    )
+}
+
+async fn automation_js() -> impl IntoResponse {
+    (
+        [(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("text/javascript; charset=utf-8"),
+        )],
+        AUTOMATION_JS,
     )
 }
 
@@ -617,9 +647,9 @@ struct SetupSettings {
     spotify_client_id: String,
     chat: ChatConfig,
     #[serde(default)]
-    obs: ObsConfig,
+    obs: Option<ObsConfig>,
     #[serde(default)]
-    league: LeagueConfig,
+    league: Option<LeagueConfig>,
     #[serde(default, skip_serializing)]
     obs_password: Option<String>,
     #[serde(default, skip_serializing)]
@@ -633,8 +663,8 @@ impl SetupSettings {
             twitch_channel: config.integrations.twitch_channel.clone(),
             spotify_client_id: config.integrations.spotify_client_id.clone(),
             chat: config.integrations.chat.clone(),
-            obs: config.obs.clone(),
-            league: config.league.clone(),
+            obs: Some(config.obs.clone()),
+            league: Some(config.league.clone()),
             obs_password: None,
             clear_obs_password: false,
         }
@@ -645,38 +675,38 @@ impl SetupSettings {
         config.integrations.twitch_channel = self.twitch_channel.trim().to_ascii_lowercase();
         config.integrations.spotify_client_id = self.spotify_client_id.trim().to_owned();
         config.integrations.chat = self.chat.clone();
-        config.obs = self.obs.clone();
-        config.obs.host = config.obs.host.trim().to_owned();
-        config.league = self.league.clone();
-        config.league.game_scene = config.league.game_scene.trim().to_owned();
-        config.league.client_scene = config.league.client_scene.trim().to_owned();
-        config.league.idle_scene = config.league.idle_scene.trim().to_owned();
-        config.league.game_process_names = config
-            .league
-            .game_process_names
-            .iter()
-            .map(|value| value.trim().to_owned())
-            .collect();
-        config.league.client_process_names = config
-            .league
-            .client_process_names
-            .iter()
-            .map(|value| value.trim().to_owned())
-            .collect();
-        config.league.client_window_classes = config
-            .league
-            .client_window_classes
-            .iter()
-            .map(|value| value.trim().to_owned())
-            .filter(|value| !value.is_empty())
-            .collect();
-        config.league.client_window_title_patterns = config
-            .league
-            .client_window_title_patterns
-            .iter()
-            .map(|value| value.trim().to_owned())
-            .filter(|value| !value.is_empty())
-            .collect();
+        if let Some(mut obs) = self.obs.clone() {
+            obs.host = obs.host.trim().to_owned();
+            config.obs = obs;
+        }
+        if let Some(mut league) = self.league.clone() {
+            league.game_scene = league.game_scene.trim().to_owned();
+            league.client_scene = league.client_scene.trim().to_owned();
+            league.idle_scene = league.idle_scene.trim().to_owned();
+            league.game_process_names = league
+                .game_process_names
+                .iter()
+                .map(|value| value.trim().to_owned())
+                .collect();
+            league.client_process_names = league
+                .client_process_names
+                .iter()
+                .map(|value| value.trim().to_owned())
+                .collect();
+            league.client_window_classes = league
+                .client_window_classes
+                .iter()
+                .map(|value| value.trim().to_owned())
+                .filter(|value| !value.is_empty())
+                .collect();
+            league.client_window_title_patterns = league
+                .client_window_title_patterns
+                .iter()
+                .map(|value| value.trim().to_owned())
+                .filter(|value| !value.is_empty())
+                .collect();
+            config.league = league;
+        }
     }
 }
 
